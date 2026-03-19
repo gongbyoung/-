@@ -68,7 +68,7 @@ input[type=color]{width:100%;height:30px;border-radius:6px;border:1px solid var(
   <div class="logo">DAVINCI <em>RESOLVE</em> TYPO</div>
   <div style="display:flex;align-items:center;gap:10px">
     <span style="font-size:10px;color:var(--dm)">DaVinci Resolve Lua Generator</span>
-    <span class="badge">DRV000</span>
+    <span class="badge">DRV001</span>
   </div>
 </div>
 <div class="main">
@@ -222,23 +222,27 @@ function doBuild(){
   const effectsFallback=fxArr.length?fxArr:['bounce'];
 
   buf=`--[[ ================================================
-  DaVinci Resolve Lua Script — DRV000
+  DaVinci Resolve Lua Script — DRV001
   Mode : ${isSub?'Subtitle ('+subPos+')':'Kinetic Fullscreen'}
   Date : ${new Date().toLocaleString('ko-KR')}
   Lines: ${raw.length}
 
-  사용법:
-    Workspace > Scripts > (이 파일 저장 후 실행)
-    또는 Workspace > Console (Lua탭) 붙여넣기 후 실행
+  실행 방법 (Edit 페이지 Console — Lua탭):
+    1. 이 파일 내용을 전체 복사
+    2. Workspace > Console > Lua 탭 선택
+    3. 붙여넣기 후 Enter
 ================================================ --]]
 
-local resolve  = Resolve()
-local proj     = resolve:GetProjectManager():GetCurrentProject()
+-- ── DaVinci Resolve API 진입점 (Edit/Console 전용) ──
+-- Resolve() 는 Fusion 페이지 전용이므로 사용 금지
+-- Edit 페이지 Console 에서는 아래 방식을 사용합니다
+local dr       = bmd.scriptapp("Resolve")
+local projMgr  = dr:GetProjectManager()
+local proj     = projMgr:GetCurrentProject()
 local timeline = proj:GetCurrentTimeline()
-local pool     = proj:GetMediaPool()
 
 if not timeline then
-    print("ERROR: 타임라인을 먼저 열어주세요.")
+    print("ERROR: Edit 페이지에서 타임라인을 먼저 열어주세요.")
     return
 end
 
@@ -247,7 +251,6 @@ local IS_SUB    = ${isSub}
 local FONT      = "${font}"
 local BOLD      = ${bold}
 local FS        = ${fs}
-local AUTO_SC   = "${autoS}"
 local TC        = ${fc}
 local BGC       = ${bgAlpha}
 local SUB_X     = ${spx}
@@ -275,10 +278,11 @@ local function rPicks(t, n)
     end
     return r
 end
+
 local function getFPS()
-    return tonumber(timeline:GetSetting("timelineFrameRate")) or 24
+    local s = timeline:GetSetting("timelineFrameRate")
+    return tonumber(s) or 24
 end
-local function s2f(s) return math.floor(s * getFPS() + 0.5) end
 
 -- ── 마커 읽기 ────────────────────────────────────────
 local markerT = {}
@@ -289,13 +293,15 @@ if SYNC == "marker" then
         local ff = {}
         for f, _ in pairs(mk) do table.insert(ff, tonumber(f)) end
         table.sort(ff)
-        for _, f in ipairs(ff) do table.insert(markerT, f / fps) end
+        for _, f in ipairs(ff) do
+            table.insert(markerT, f / fps)
+        end
     end
     if #markerT == 0 then
-        print("WARNING: 마커 없음 → 균등분할로 진행합니다.")
+        print("WARNING: 마커 없음 → 균등분할로 전환")
         SYNC = "linear"
     elseif #markerT < #LINES then
-        print("WARNING: 마커(" .. #markerT .. ") < 줄(" .. #LINES .. ")")
+        print("WARNING: 마커 " .. #markerT .. "개 < 줄 " .. #LINES .. "개")
     end
 end
 
@@ -317,161 +323,162 @@ local function getStEt(i)
     return st, et
 end
 
--- ── 키프레임 헬퍼 (올바른 Fusion Lua API) ──────────────
--- inp  : tool의 Input 객체 (tool:GetInput("InputName") 이 아닌 tool.InputName)
--- kf   : { [프레임] = 값, ... } 테이블
--- Point 타입이면 isPoint=true, 값은 {x, y} 테이블로 전달
-local function setKF(tool, inputName, kf, isPoint)
-    -- 입력값이 없으면 건너뜀
-    if not kf or not next(kf) then return end
-    -- 첫 번째 키프레임을 먼저 SetInput으로 설정해 채널 활성화
+-- ── Fusion 컴프 내 키프레임 설정 헬퍼 ─────────────────
+-- DaVinci Resolve Fusion Lua 에서 키프레임 올바른 방법:
+--   comp 의 현재 시간을 이동한 뒤 tool.Input[time] = value 대신
+--   tool.Input:SetValueAtTime(frame, value) 을 사용합니다.
+local function setKF(tool, inputName, kfTable, isPoint)
+    if not kfTable then return end
+    local inp = tool[inputName]
+    if not inp then
+        print("  WARN: input '" .. inputName .. "' 없음, 건너뜀")
+        return
+    end
+    -- 프레임 번호를 정렬해서 순서대로 키프레임 설정
     local frames = {}
-    for f, _ in pairs(kf) do table.insert(frames, f) end
+    for f in pairs(kfTable) do table.insert(frames, f) end
     table.sort(frames)
-    -- 애니메이션 모드 활성화: 아무 프레임에 값을 쓰면 자동으로 키프레임 생성
     for _, f in ipairs(frames) do
-        local v = kf[f]
-        if isPoint then
-            tool[inputName]:SetValueAtTime(f, Point(v[1], v[2]))
-        else
-            tool[inputName]:SetValueAtTime(f, v)
+        local v = kfTable[f]
+        local ok, err = pcall(function()
+            if isPoint then
+                inp:SetValueAtTime(f, Point(v[1], v[2]))
+            else
+                inp:SetValueAtTime(f, v)
+            end
+        end)
+        if not ok then
+            print("  WARN: setKF(" .. inputName .. ", f=" .. f .. ") 실패: " .. tostring(err))
         end
     end
 end
 
--- ── Fusion 효과 적용 ─────────────────────────────────
-local function applyFusion(clip, text, st, et, fadeType, motionFX)
+-- ── Fusion 컴프에 텍스트 & 효과 적용 ─────────────────
+local function applyFusion(clip, text, fadeType, motionFX)
+    -- Edit 페이지 클립에서 Fusion 컴프 가져오기
     local comp = clip:GetFusionCompByIndex(1)
-    if not comp then comp = clip:AddFusionComp() end
     if not comp then
-        print("SKIP: Fusion comp 없음 — " .. text)
-        return
+        -- 없으면 새로 만들기
+        comp = clip:AddFusionComp()
+    end
+    if not comp then
+        print("  ERROR: Fusion comp 생성 실패 — " .. text)
+        return false
     end
 
-    comp:StartUndo("DRV000")
-    local fps  = getFPS()
-    local dur  = et - st
-    local totF = math.floor(dur * fps)
-    local mOut = comp:FindToolByID("MediaOut")
-    local fadeF = math.floor(fps * 0.2)
-    local movF  = math.floor(fps * 0.22)
-    local bF    = math.floor(fps * 0.12)
-    local bF2   = math.floor(fps * 0.24)
+    local fps   = getFPS()
+    -- 클립의 실제 프레임 길이
+    local durF  = clip:GetDuration()
+    if not durF or durF < 2 then durF = math.floor(getFPS() * DEF_DUR) end
+    local totF  = durF - 1   -- 마지막 유효 프레임 (0-based)
+
+    local fadeF = math.max(1, math.floor(fps * 0.2))
+    local movF  = math.max(1, math.floor(fps * 0.22))
+    local bF    = math.max(1, math.floor(fps * 0.12))
+    local bF2   = math.max(1, math.floor(fps * 0.24))
 
     local baseX = IS_SUB and SUB_X or 0.5
     local baseY = IS_SUB and SUB_Y or 0.5
     local baseS = FS / 1000.0
 
-    -- ── Text+ 노드 생성 ─────────────────────────────
-    local txt = comp:AddTool("TextPlus", -32768, 1)
-    -- 텍스트 내용 & 스타일
-    txt:SetInput("StyledText",  text)
-    txt:SetInput("Font",        FONT)
-    txt:SetInput("Style",       BOLD and "Bold" or "Regular")
-    txt:SetInput("Size",        baseS)
-    txt:SetInput("Red1",        TC[1])
-    txt:SetInput("Green1",      TC[2])
-    txt:SetInput("Blue1",       TC[3])
-    txt:SetInput("Alpha1",      1.0)
-    txt:SetInput("HorizontalJustificationNew", 1) -- 가운데 정렬
-    -- 초기 위치
-    txt:SetInput("Center", Point(baseX, baseY))
+    comp:Lock()
 
-    -- ── Fade In/Out 투명도 ──────────────────────────
-    setKF(txt, "Alpha1", {[0]=0, [fadeF]=1})
+    -- MediaOut 찾기 (없으면 건너뜀)
+    local mOut = comp:FindToolByID("MediaOut")
+
+    -- ── Text+ 노드 ───────────────────────────────
+    local txt = comp:AddTool("TextPlus", 1, 1)
+    txt.StyledText = text
+    txt.Font       = FONT
+    txt.Style      = BOLD and "Bold" or "Regular"
+    txt.Size       = baseS
+    txt.Red1       = TC[1]
+    txt.Green1     = TC[2]
+    txt.Blue1      = TC[3]
+    txt.Alpha1     = 1.0
+    txt.Center     = { baseX, baseY }
+    -- 가운데 정렬 (1=center)
+    txt.HorizontalJustificationNew = 1
+
+    -- ── 투명도: Fade In ──────────────────────────
+    setKF(txt, "Alpha1", {[0]=0.0, [fadeF]=1.0})
+
+    -- ── 투명도: Fade Out (마지막 직전) ──────────
     local foF = totF - math.floor(fps * 0.15)
     if foF > fadeF + 3 then
-        setKF(txt, "Alpha1", {[foF]=1, [totF]=0})
+        setKF(txt, "Alpha1", {[foF]=1.0, [totF]=0.0})
     end
 
-    -- ── Fade 방향 (위치/크기 키프레임) ─────────────
+    -- ── Fade 방향 ───────────────────────────────
     if fadeType == "fade_h" then
         setKF(txt, "Center", {
-            [0]    = {baseX - 0.1, baseY},
-            [movF] = {baseX,       baseY}
+            [0]={baseX-0.1, baseY}, [movF]={baseX, baseY}
         }, true)
     elseif fadeType == "fade_v" then
         local oy = IS_SUB and 0.07 or -0.07
         setKF(txt, "Center", {
-            [0]    = {baseX, baseY + oy},
-            [movF] = {baseX, baseY}
+            [0]={baseX, baseY+oy}, [movF]={baseX, baseY}
         }, true)
     elseif fadeType == "fade_diag" then
         setKF(txt, "Center", {
-            [0]    = {baseX - 0.08, baseY + 0.05},
-            [movF] = {baseX,        baseY}
+            [0]={baseX-0.08, baseY+0.05}, [movF]={baseX, baseY}
         }, true)
     elseif fadeType == "fade_zoom_in" then
         setKF(txt, "Size", {[0]=baseS*0.4, [movF]=baseS})
     elseif fadeType == "fade_zoom_out" then
         setKF(txt, "Size", {[0]=baseS*1.7, [movF]=baseS})
     end
-    -- fade_none: 키프레임 없음
 
-    -- ── 모션 효과 ───────────────────────────────────
+    -- ── 모션 효과 ───────────────────────────────
     for _, fx in ipairs(motionFX) do
         if fx == "bounce" then
             local oy = IS_SUB and 0.08 or 0.15
             setKF(txt, "Center", {
-                [0]   = {baseX, baseY + oy},
-                [bF]  = {baseX, baseY - 0.02},
-                [bF2] = {baseX, baseY}
+                [0]={baseX,baseY+oy}, [bF]={baseX,baseY-0.02}, [bF2]={baseX,baseY}
             }, true)
         elseif fx == "slide_l" then
             setKF(txt, "Center", {
-                [0]   = {baseX - 0.35, baseY},
-                [bF]  = {baseX + 0.02, baseY},
-                [bF2] = {baseX,        baseY}
+                [0]={baseX-0.35,baseY}, [bF]={baseX+0.02,baseY}, [bF2]={baseX,baseY}
             }, true)
         elseif fx == "slide_r" then
             setKF(txt, "Center", {
-                [0]   = {baseX + 0.35, baseY},
-                [bF]  = {baseX - 0.02, baseY},
-                [bF2] = {baseX,        baseY}
+                [0]={baseX+0.35,baseY}, [bF]={baseX-0.02,baseY}, [bF2]={baseX,baseY}
             }, true)
         elseif fx == "drop" then
             local oy = IS_SUB and 0.15 or 0.35
             setKF(txt, "Center", {
-                [0]   = {baseX, baseY - oy},
-                [bF]  = {baseX, baseY + 0.02},
-                [bF2] = {baseX, baseY}
+                [0]={baseX,baseY-oy}, [bF]={baseX,baseY+0.02}, [bF2]={baseX,baseY}
             }, true)
         elseif fx == "rise" then
             local oy = IS_SUB and 0.15 or 0.35
             setKF(txt, "Center", {
-                [0]   = {baseX, baseY + oy},
-                [bF]  = {baseX, baseY - 0.02},
-                [bF2] = {baseX, baseY}
+                [0]={baseX,baseY+oy}, [bF]={baseX,baseY-0.02}, [bF2]={baseX,baseY}
             }, true)
         elseif fx == "scale_pop" then
-            setKF(txt, "Size", {
-                [0]   = baseS * 0.05,
-                [bF]  = baseS * 1.22,
-                [bF2] = baseS
-            })
+            setKF(txt, "Size", {[0]=baseS*0.05, [bF]=baseS*1.22, [bF2]=baseS})
         elseif fx == "spin_in" then
             setKF(txt, "Rotation", {[0]=-180, [bF]=8, [bF2]=0})
             setKF(txt, "Size",     {[0]=baseS*0.05, [bF]=baseS})
         elseif fx == "shake" then
-            local sf = math.floor(fps * 0.04)
+            local sf = math.max(1, math.floor(fps * 0.04))
             setKF(txt, "Center", {
-                [0]      = {baseX + 0.015, baseY},
-                [sf]     = {baseX - 0.015, baseY},
-                [sf*2]   = {baseX + 0.01,  baseY},
-                [sf*3]   = {baseX - 0.008, baseY},
-                [sf*4]   = {baseX,         baseY}
+                [0]   ={baseX+0.015,baseY},
+                [sf]  ={baseX-0.015,baseY},
+                [sf*2]={baseX+0.01, baseY},
+                [sf*3]={baseX-0.008,baseY},
+                [sf*4]={baseX,      baseY}
             }, true)
         end
     end
 
-    -- ── 자막 배경 (자막 모드 전용) ──────────────────
+    -- ── 자막 배경 ────────────────────────────────
     if IS_SUB then
-        local bg2 = comp:AddTool("Background", -32768, 2)
-        bg2:SetInput("TopLeftRed",   BGC[1])
-        bg2:SetInput("TopLeftGreen", BGC[2])
-        bg2:SetInput("TopLeftBlue",  BGC[3])
-        bg2:SetInput("TopLeftAlpha", BGC[4] or ${ba})
-        local mg = comp:AddTool("Merge", -32768, 3)
+        local bg2 = comp:AddTool("Background", 1, 2)
+        bg2.TopLeftRed   = BGC[1]
+        bg2.TopLeftGreen = BGC[2]
+        bg2.TopLeftBlue  = BGC[3]
+        bg2.TopLeftAlpha = BGC[4] or ${ba}
+        local mg = comp:AddTool("Merge", 1, 3)
         mg:ConnectInput("Background", bg2)
         mg:ConnectInput("Foreground", txt)
         if mOut then mOut:ConnectInput("Input", mg) end
@@ -479,23 +486,25 @@ local function applyFusion(clip, text, st, et, fadeType, motionFX)
         if mOut then mOut:ConnectInput("Input", txt) end
     end
 
-    comp:EndUndo(true)
+    comp:Unlock()
+    return true
 end
 
 -- ── 메인 ─────────────────────────────────────────────
-print("=== DRV000 — DaVinci Lua ===")
-print("줄: " .. #LINES .. " / 모드: " .. (IS_SUB and "자막" or "키네틱"))
+print("=== DRV001 — DaVinci Lua ===")
+print("줄: " .. #LINES .. " / 모드: " .. (IS_SUB and "자막" or "키네틱") .. " / FPS: " .. getFPS())
 
-local clips = timeline:GetItemListInTrack("video", 2) or {}
+local clips = timeline:GetItemListInTrack("video", 2)
+if not clips then clips = {} end
 
 if #clips == 0 then
     print([[
 ⚠ V2 트랙에 클립이 없습니다.
 
 【준비 방법】
-1. Edit 페이지 > Effects Library > Titles
-2. "Fusion Title" 을 V2 트랙에
-   마커 수만큼 드래그하여 배치
+1. Edit 페이지 > Effects > Titles
+2. 아무 Title 이나 V2 트랙에
+   가사 줄 수만큼 드래그하여 배치
 3. 이 스크립트를 다시 실행하세요.
 ]])
     return
@@ -505,20 +514,21 @@ local ok = 0
 for i, line in ipairs(LINES) do
     local clip = clips[i]
     if not clip then
-        print("SKIP: 클립 수(" .. #clips .. ") < 줄 수(" .. #LINES .. "). " .. i .. "번째 건너뜀")
+        print("SKIP: 클립(" .. #clips .. ") < 줄(" .. #LINES .. "), " .. i .. "번째 건너뜀")
         break
     end
-    local st, et = getStEt(i)
     local fd = (FADE_MODE == "random") and rPick(FADE_POOL) or FADE_POOL[1]
     local np = math.random(1, math.min(3, #FX_POOL))
     local picks = rPicks(FX_POOL, np)
-    applyFusion(clip, line, st, et, fd, picks)
-    print(string.format("✅ %d/%d  [%s]  fade=%s  fx={%s}",
-        i, #LINES, line, fd, table.concat(picks, ",")))
-    ok = ok + 1
+    local success = applyFusion(clip, line, fd, picks)
+    if success then
+        print(string.format("✅ %d/%d  [%s]  fade=%s  fx={%s}",
+            i, #LINES, line, fd, table.concat(picks, ",")))
+        ok = ok + 1
+    end
 end
 
-print("=== 완료! " .. ok .. "개 클립 처리 ===")
+print("=== 완료! " .. ok .. "/" .. #LINES .. "개 처리 ===")
 `;
   document.getElementById('dl').style.display='block';
   setStatus('✅ '+raw.length+'줄 생성 완료 — 저장 버튼을 누르세요','ok');
@@ -529,7 +539,7 @@ function doSave(){
   const b=new Blob([buf],{type:'text/plain'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(b);
-  a.download='DRV000_'+mode+'_'+new Date().toISOString().slice(0,10)+'.lua';
+  a.download='DRV001_'+mode+'_'+new Date().toISOString().slice(0,10)+'.lua';
   a.click();
 }
 </script>
