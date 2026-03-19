@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>DaVinci Resolve Lua — DRV007</title>
+<title>DaVinci Resolve Lua — DRV008</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+KR:wght@300;400;700;900&display=swap');
 :root{--bg:#080810;--sf:#0f0f1a;--bd:#1e1e30;--dv:#b97bff;--gd:#ffd000;--gn:#00ff88;--tx:#c8c8e0;--dm:#55556a;--r:8px;}
@@ -68,7 +68,7 @@ input[type=color]{width:100%;height:30px;border-radius:6px;border:1px solid var(
   <div class="logo">DAVINCI <em>RESOLVE</em> TYPO</div>
   <div style="display:flex;align-items:center;gap:10px">
     <span style="font-size:10px;color:var(--dm)">DaVinci Resolve Lua Generator</span>
-    <span class="badge">DRV007</span>
+    <span class="badge">DRV008</span>
   </div>
 </div>
 <div class="main">
@@ -259,7 +259,7 @@ function doBuild(){
   const effectsFallback=fxArr.length?fxArr:['bounce'];
 
   buf=`--[[ ================================================
-  DaVinci Resolve Lua Script — DRV007
+  DaVinci Resolve Lua Script — DRV008
   Mode : ${isSub?'Subtitle ('+subPos+')':'Kinetic Fullscreen'}
   Date : ${new Date().toLocaleString('ko-KR')}
   Lines: ${raw.length}
@@ -311,15 +311,28 @@ if SYNC == "marker" then
     end
 end
 
--- V2 트랙 클립 목록
+-- ── 타임라인 기본 정보 ───────────────────────────────
+local fps      = getFPS()
+local proj     = resolve:GetProjectManager():GetCurrentProject()
+local mediaPool = proj:GetMediaPool()
+
+-- ── V2 트랙 기존 클립 확인 ───────────────────────────
 local clips = timeline:GetItemListInTrack("video", 2) or {}
+
 if #clips == 0 then
-    print([[V2 트랙에 클립이 없습니다.
-Effects > Titles 에서 아무 Title이나 가사 줄 수만큼 V2에 배치 후 재실행]])
+    print([[
+⚠ V2 트랙에 클립이 없습니다.
+
+【준비 방법】
+1. Edit 페이지 > Effects > Titles
+2. 아무 Title 이나 (예: Fade On)
+   V2 트랙에 가사 줄 수만큼 드래그
+3. 이 스크립트를 다시 실행
+]])
     return
 end
 
-print("=== DRV007 시작 | 클립:" .. #clips .. " 줄:" .. #LINES .. " ===")
+print("=== DRV008 시작 | 클립:" .. #clips .. " 줄:" .. #LINES .. " ===")
 
 local ok = 0
 for i, line in ipairs(LINES) do
@@ -329,37 +342,44 @@ for i, line in ipairs(LINES) do
         break
     end
 
-    -- Fusion 컴프 열기
+    -- Fusion 컴프 가져오기
     local comp = clip:GetFusionCompByIndex(1)
-    if not comp then
-        comp = clip:AddFusionComp()
-    end
-
+    if not comp then comp = clip:AddFusionComp() end
     if not comp then
         print("ERROR " .. i .. ": comp 없음")
         goto continue
     end
 
     do
-        -- ── 기존 노드 전부 삭제 (깨끗한 상태로) ──
-        local toolList = comp:GetToolList()
-        for _, tool in pairs(toolList) do
-            local id = tool:GetID()
-            -- MediaOut 은 남겨두고 나머지 삭제
-            if id ~= "MediaOut" then
-                tool:Delete()
+        -- ── 모든 기존 툴 삭제 ────────────────────────
+        -- GetToolList(false) = 모든 툴, true = 선택된 툴만
+        local allTools = comp:GetToolList(false)
+        if allTools then
+            -- 먼저 연결 끊기
+            for _, t in pairs(allTools) do
+                local ok2, _ = pcall(function() t:DisconnectAll() end)
+            end
+            -- 그 다음 삭제 (MediaOut 제외)
+            for _, t in pairs(allTools) do
+                local tid = ""
+                local ok2, _ = pcall(function() tid = t:GetID() end)
+                if ok2 and tid ~= "MediaOut" then
+                    pcall(function() t:Delete() end)
+                end
             end
         end
 
-        -- ── TextPlus 새로 생성 ────────────────────
-        local txt = comp:AddTool("TextPlus", 1, 1)
+        -- ── MediaOut 재확인 ───────────────────────────
+        local mOut = comp:FindToolByID("MediaOut")
 
+        -- ── TextPlus 생성 ────────────────────────────
+        local txt = comp:AddTool("TextPlus", 1, 1)
         if not txt then
             print("ERROR " .. i .. ": TextPlus 생성 실패")
             goto continue
         end
 
-        -- ── 텍스트 기본 설정 ──────────────────────
+        -- ── 텍스트 설정 ──────────────────────────────
         txt.StyledText = line
         txt.Font       = FONT
         txt.Style      = STYLE
@@ -368,7 +388,7 @@ for i, line in ipairs(LINES) do
         txt.Green1     = G
         txt.Blue1      = B
         txt.Alpha1     = 1.0
-        txt.HorizontalJustificationNew = 1  -- 가운데 정렬
+        txt.HorizontalJustificationNew = 1
 
         if IS_SUB then
             txt.Center = { SUB_X, SUB_Y }
@@ -376,14 +396,9 @@ for i, line in ipairs(LINES) do
             txt.Center = { 0.5, 0.5 }
         end
 
-        -- ── MediaOut 에 연결 ──────────────────────
-        local mOut = comp:FindToolByID("MediaOut")
+        -- ── MediaOut 연결 ────────────────────────────
         if mOut then
-            mOut:ConnectInput("Input", txt)
-        else
-            -- MediaOut 도 없으면 새로 만들고 연결
-            local newOut = comp:AddTool("MediaOut", 2, 1)
-            if newOut then newOut:ConnectInput("Input", txt) end
+            pcall(function() mOut:ConnectInput("Input", txt) end)
         end
 
         print(string.format("✅ %d/%d  %s", i, #LINES, line))
@@ -394,11 +409,6 @@ for i, line in ipairs(LINES) do
 end
 
 print("=== 완료! " .. ok .. "/" .. #LINES .. "개 ===")
-print("")
-print("-- 다음 단계 --")
-print("각 클립을 더블클릭 > Fusion 페이지에서")
-print("직접 키프레임/효과를 추가하거나,")
-print("Inspector > Retime & Scaling 에서 속도 조절 가능")
 `;
   document.getElementById('dl').style.display='block';
   setStatus('✅ '+raw.length+'줄 생성 완료 — 저장 버튼을 누르세요','ok');
@@ -409,7 +419,7 @@ function doSave(){
   const b=new Blob([buf],{type:'text/plain'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(b);
-  a.download='DRV007_'+mode+'_'+new Date().toISOString().slice(0,10)+'.lua';
+  a.download='DRV008_'+mode+'_'+new Date().toISOString().slice(0,10)+'.lua';
   a.click();
 }
 </script>
