@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>DaVinci Resolve Lua — DRV001</title>
+<title>DaVinci Resolve Lua — DRV002</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+KR:wght@300;400;700;900&display=swap');
 :root{--bg:#080810;--sf:#0f0f1a;--bd:#1e1e30;--dv:#b97bff;--gd:#ffd000;--gn:#00ff88;--tx:#c8c8e0;--dm:#55556a;--r:8px;}
@@ -68,7 +68,7 @@ input[type=color]{width:100%;height:30px;border-radius:6px;border:1px solid var(
   <div class="logo">DAVINCI <em>RESOLVE</em> TYPO</div>
   <div style="display:flex;align-items:center;gap:10px">
     <span style="font-size:10px;color:var(--dm)">DaVinci Resolve Lua Generator</span>
-    <span class="badge">DRV001</span>
+    <span class="badge">DRV002</span>
   </div>
 </div>
 <div class="main">
@@ -222,7 +222,7 @@ function doBuild(){
   const effectsFallback=fxArr.length?fxArr:['bounce'];
 
   buf=`--[[ ================================================
-  DaVinci Resolve Lua Script — DRV001
+  DaVinci Resolve Lua Script — DRV002
   Mode : ${isSub?'Subtitle ('+subPos+')':'Kinetic Fullscreen'}
   Date : ${new Date().toLocaleString('ko-KR')}
   Lines: ${raw.length}
@@ -233,13 +233,11 @@ function doBuild(){
     3. 붙여넣기 후 Enter
 ================================================ --]]
 
--- ── DaVinci Resolve API 진입점 (Edit/Console 전용) ──
--- Resolve() 는 Fusion 페이지 전용이므로 사용 금지
--- Edit 페이지 Console 에서는 아래 방식을 사용합니다
-local dr       = bmd.scriptapp("Resolve")
-local projMgr  = dr:GetProjectManager()
-local proj     = projMgr:GetCurrentProject()
-local timeline = proj:GetCurrentTimeline()
+-- ── DaVinci Console 전역 변수 사용 ─────────────────
+-- Console(Lua)에서는 resolve/project/timeline 이 이미 전역으로 존재합니다
+-- Resolve() 나 bmd.scriptapp() 호출 불필요
+
+local timeline = resolve:GetProjectManager():GetCurrentProject():GetCurrentTimeline()
 
 if not timeline then
     print("ERROR: Edit 페이지에서 타임라인을 먼저 열어주세요.")
@@ -491,7 +489,7 @@ local function applyFusion(clip, text, fadeType, motionFX)
 end
 
 -- ── 메인 ─────────────────────────────────────────────
-print("=== DRV001 — DaVinci Lua ===")
+print("=== DRV002 — DaVinci Lua ===")
 print("줄: " .. #LINES .. " / 모드: " .. (IS_SUB and "자막" or "키네틱") .. " / FPS: " .. getFPS())
 
 local clips = timeline:GetItemListInTrack("video", 2)
@@ -539,7 +537,7 @@ function doSave(){
   const b=new Blob([buf],{type:'text/plain'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(b);
-  a.download='DRV001_'+mode+'_'+new Date().toISOString().slice(0,10)+'.lua';
+  a.download='DRV002_'+mode+'_'+new Date().toISOString().slice(0,10)+'.lua';
   a.click();
 }
 </script>
