@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>DaVinci Resolve Lua — DRV002</title>
+<title>DaVinci Resolve Lua — DRV003</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+KR:wght@300;400;700;900&display=swap');
 :root{--bg:#080810;--sf:#0f0f1a;--bd:#1e1e30;--dv:#b97bff;--gd:#ffd000;--gn:#00ff88;--tx:#c8c8e0;--dm:#55556a;--r:8px;}
@@ -68,7 +68,7 @@ input[type=color]{width:100%;height:30px;border-radius:6px;border:1px solid var(
   <div class="logo">DAVINCI <em>RESOLVE</em> TYPO</div>
   <div style="display:flex;align-items:center;gap:10px">
     <span style="font-size:10px;color:var(--dm)">DaVinci Resolve Lua Generator</span>
-    <span class="badge">DRV002</span>
+    <span class="badge">DRV003</span>
   </div>
 </div>
 <div class="main">
@@ -122,8 +122,39 @@ input[type=color]{width:100%;height:30px;border-radius:6px;border:1px solid var(
 
 <div class="card full"><div class="ch"><div class="dot"></div><div class="ct">폰트 & 색상</div></div><div class="cb">
   <div class="g2" style="gap:8px">
-    <div class="field"><div class="fl">폰트 이름</div><input type="text" id="fn" value="Arial" placeholder="시스템 폰트명"></div>
-    <div class="field"><div class="fl">Bold</div><select id="bd"><option value="true">Bold 적용</option><option value="false">일반</option></select></div>
+    <div class="field"><div class="fl">폰트 프리셋</div>
+      <select id="fp2" onchange="document.getElementById('fn').value=this.value">
+        <option value="">직접 입력</option>
+        <optgroup label="── 영문 Sans ──">
+          <option value="Arial">Arial</option>
+          <option value="Arial Bold" selected>Arial Bold</option>
+          <option value="Arial Black">Arial Black</option>
+          <option value="Helvetica">Helvetica</option>
+          <option value="Helvetica Neue">Helvetica Neue</option>
+          <option value="Impact">Impact</option>
+          <option value="Verdana">Verdana</option>
+          <option value="Tahoma">Tahoma</option>
+        </optgroup>
+        <optgroup label="── 영문 Serif ──">
+          <option value="Times New Roman">Times New Roman</option>
+          <option value="Georgia">Georgia</option>
+        </optgroup>
+        <optgroup label="── 한국어 ──">
+          <option value="Apple SD Gothic Neo">Apple SD Gothic Neo (Mac)</option>
+          <option value="Nanum Gothic">나눔고딕</option>
+          <option value="Nanum Gothic ExtraBold">나눔고딕 ExtraBold</option>
+          <option value="Nanum Square">나눔스퀘어</option>
+          <option value="Malgun Gothic">맑은 고딕 (Win)</option>
+          <option value="Gmarket Sans">Gmarket Sans</option>
+          <option value="Black Han Sans">검은고딕</option>
+          <option value="Noto Sans KR">Noto Sans KR</option>
+        </optgroup>
+      </select>
+    </div>
+    <div class="field"><div class="fl">폰트 직접 입력</div>
+      <input type="text" id="fn" value="Arial Bold" placeholder="DaVinci 폰트 이름">
+      <div style="font-size:9px;color:var(--dm);margin-top:3px">Fusion에서 보이는 이름 그대로 입력</div>
+    </div>
   </div>
   <div class="g2" style="gap:8px">
     <div class="field"><div class="fl">글자 색상</div><input type="color" id="fc" value="#ffffff"></div>
@@ -203,8 +234,8 @@ function doBuild(){
   const fpArr=[...document.querySelectorAll('#fp input:checked')].map(e=>e.value);
   const fxArr=[...document.querySelectorAll('#fx input:checked')].map(e=>e.value);
   if(!fpArr.length){setStatus('⚠ Fade 방향을 선택하세요.','err');return;}
-  const font=document.getElementById('fn').value||'Arial';
-  const bold=document.getElementById('bd').value==='true';
+  const font=document.getElementById('fn').value.trim()||'Arial Bold';
+  const bold=font.toLowerCase().includes('bold');  // 폰트명에 bold 포함 여부로 자동 판단
   const fc=h2lua(document.getElementById('fc').value);
   const bg=h2lua(document.getElementById('bg').value);
   const ba=(parseInt(document.getElementById('ba').value)/100).toFixed(2);
@@ -222,7 +253,7 @@ function doBuild(){
   const effectsFallback=fxArr.length?fxArr:['bounce'];
 
   buf=`--[[ ================================================
-  DaVinci Resolve Lua Script — DRV002
+  DaVinci Resolve Lua Script — DRV003
   Mode : ${isSub?'Subtitle ('+subPos+')':'Kinetic Fullscreen'}
   Date : ${new Date().toLocaleString('ko-KR')}
   Lines: ${raw.length}
@@ -246,8 +277,8 @@ end
 
 -- ── 설정 ────────────────────────────────────────────
 local IS_SUB    = ${isSub}
-local FONT      = "${font}"
-local BOLD      = ${bold}
+local FONT      = "${font.replace(/ bold$/i,'').replace(/ italic$/i,'').trim()}"
+local STYLE     = "${bold ? 'Bold' : 'Regular'}"
 local FS        = ${fs}
 local TC        = ${fc}
 local BGC       = ${bgAlpha}
@@ -321,54 +352,22 @@ local function getStEt(i)
     return st, et
 end
 
--- ── Fusion 컴프 내 키프레임 설정 헬퍼 ─────────────────
--- DaVinci Resolve Fusion Lua 에서 키프레임 올바른 방법:
---   comp 의 현재 시간을 이동한 뒤 tool.Input[time] = value 대신
---   tool.Input:SetValueAtTime(frame, value) 을 사용합니다.
-local function setKF(tool, inputName, kfTable, isPoint)
-    if not kfTable then return end
-    local inp = tool[inputName]
-    if not inp then
-        print("  WARN: input '" .. inputName .. "' 없음, 건너뜀")
-        return
-    end
-    -- 프레임 번호를 정렬해서 순서대로 키프레임 설정
-    local frames = {}
-    for f in pairs(kfTable) do table.insert(frames, f) end
-    table.sort(frames)
-    for _, f in ipairs(frames) do
-        local v = kfTable[f]
-        local ok, err = pcall(function()
-            if isPoint then
-                inp:SetValueAtTime(f, Point(v[1], v[2]))
-            else
-                inp:SetValueAtTime(f, v)
-            end
-        end)
-        if not ok then
-            print("  WARN: setKF(" .. inputName .. ", f=" .. f .. ") 실패: " .. tostring(err))
-        end
-    end
-end
-
 -- ── Fusion 컴프에 텍스트 & 효과 적용 ─────────────────
+-- DaVinci Fusion에서 키프레임 설정 올바른 방법:
+--   comp:SetCurrentTime(frame) 으로 시간 이동 후
+--   tool.Input = value 로 값 설정하면 자동 키프레임 생성
 local function applyFusion(clip, text, fadeType, motionFX)
-    -- Edit 페이지 클립에서 Fusion 컴프 가져오기
     local comp = clip:GetFusionCompByIndex(1)
-    if not comp then
-        -- 없으면 새로 만들기
-        comp = clip:AddFusionComp()
-    end
+    if not comp then comp = clip:AddFusionComp() end
     if not comp then
         print("  ERROR: Fusion comp 생성 실패 — " .. text)
         return false
     end
 
-    local fps   = getFPS()
-    -- 클립의 실제 프레임 길이
-    local durF  = clip:GetDuration()
-    if not durF or durF < 2 then durF = math.floor(getFPS() * DEF_DUR) end
-    local totF  = durF - 1   -- 마지막 유효 프레임 (0-based)
+    local fps  = getFPS()
+    local durF = clip:GetDuration()
+    if not durF or durF < 2 then durF = math.floor(fps * DEF_DUR) end
+    local totF = durF - 1
 
     local fadeF = math.max(1, math.floor(fps * 0.2))
     local movF  = math.max(1, math.floor(fps * 0.22))
@@ -380,94 +379,108 @@ local function applyFusion(clip, text, fadeType, motionFX)
     local baseS = FS / 1000.0
 
     comp:Lock()
-
-    -- MediaOut 찾기 (없으면 건너뜀)
     local mOut = comp:FindToolByID("MediaOut")
 
-    -- ── Text+ 노드 ───────────────────────────────
+    -- ── Text+ 노드 생성 ──────────────────────────
     local txt = comp:AddTool("TextPlus", 1, 1)
+
+    -- 시간 0에서 기본값 설정
+    comp:SetCurrentTime(0)
     txt.StyledText = text
     txt.Font       = FONT
-    txt.Style      = BOLD and "Bold" or "Regular"
+    txt.Style      = STYLE
     txt.Size       = baseS
     txt.Red1       = TC[1]
     txt.Green1     = TC[2]
     txt.Blue1      = TC[3]
     txt.Alpha1     = 1.0
     txt.Center     = { baseX, baseY }
-    -- 가운데 정렬 (1=center)
-    txt.HorizontalJustificationNew = 1
+    txt.HorizontalJustificationNew = 1  -- 가운데 정렬
 
-    -- ── 투명도: Fade In ──────────────────────────
-    setKF(txt, "Alpha1", {[0]=0.0, [fadeF]=1.0})
+    -- ── 키프레임 헬퍼: SetCurrentTime + 값 대입 ──
+    -- Point 타입(Center)은 {x,y} 테이블로 전달
+    local function kf(inp, frame, val)
+        comp:SetCurrentTime(frame)
+        inp[frame] = val
+    end
 
-    -- ── 투명도: Fade Out (마지막 직전) ──────────
+    -- ── Fade In 투명도 ───────────────────────────
+    kf(txt.Alpha1, 0,     0.0)
+    kf(txt.Alpha1, fadeF, 1.0)
+
+    -- ── Fade Out ────────────────────────────────
     local foF = totF - math.floor(fps * 0.15)
     if foF > fadeF + 3 then
-        setKF(txt, "Alpha1", {[foF]=1.0, [totF]=0.0})
+        kf(txt.Alpha1, foF,  1.0)
+        kf(txt.Alpha1, totF, 0.0)
     end
 
     -- ── Fade 방향 ───────────────────────────────
     if fadeType == "fade_h" then
-        setKF(txt, "Center", {
-            [0]={baseX-0.1, baseY}, [movF]={baseX, baseY}
-        }, true)
+        kf(txt.Center, 0,    { baseX-0.1, baseY })
+        kf(txt.Center, movF, { baseX,     baseY })
     elseif fadeType == "fade_v" then
         local oy = IS_SUB and 0.07 or -0.07
-        setKF(txt, "Center", {
-            [0]={baseX, baseY+oy}, [movF]={baseX, baseY}
-        }, true)
+        kf(txt.Center, 0,    { baseX, baseY+oy })
+        kf(txt.Center, movF, { baseX, baseY    })
     elseif fadeType == "fade_diag" then
-        setKF(txt, "Center", {
-            [0]={baseX-0.08, baseY+0.05}, [movF]={baseX, baseY}
-        }, true)
+        kf(txt.Center, 0,    { baseX-0.08, baseY+0.05 })
+        kf(txt.Center, movF, { baseX,      baseY      })
     elseif fadeType == "fade_zoom_in" then
-        setKF(txt, "Size", {[0]=baseS*0.4, [movF]=baseS})
+        kf(txt.Size, 0,    baseS * 0.4)
+        kf(txt.Size, movF, baseS)
     elseif fadeType == "fade_zoom_out" then
-        setKF(txt, "Size", {[0]=baseS*1.7, [movF]=baseS})
+        kf(txt.Size, 0,    baseS * 1.7)
+        kf(txt.Size, movF, baseS)
     end
 
     -- ── 모션 효과 ───────────────────────────────
     for _, fx in ipairs(motionFX) do
         if fx == "bounce" then
             local oy = IS_SUB and 0.08 or 0.15
-            setKF(txt, "Center", {
-                [0]={baseX,baseY+oy}, [bF]={baseX,baseY-0.02}, [bF2]={baseX,baseY}
-            }, true)
+            kf(txt.Center, 0,   { baseX, baseY+oy   })
+            kf(txt.Center, bF,  { baseX, baseY-0.02 })
+            kf(txt.Center, bF2, { baseX, baseY      })
         elseif fx == "slide_l" then
-            setKF(txt, "Center", {
-                [0]={baseX-0.35,baseY}, [bF]={baseX+0.02,baseY}, [bF2]={baseX,baseY}
-            }, true)
+            kf(txt.Center, 0,   { baseX-0.35, baseY })
+            kf(txt.Center, bF,  { baseX+0.02, baseY })
+            kf(txt.Center, bF2, { baseX,      baseY })
         elseif fx == "slide_r" then
-            setKF(txt, "Center", {
-                [0]={baseX+0.35,baseY}, [bF]={baseX-0.02,baseY}, [bF2]={baseX,baseY}
-            }, true)
+            kf(txt.Center, 0,   { baseX+0.35, baseY })
+            kf(txt.Center, bF,  { baseX-0.02, baseY })
+            kf(txt.Center, bF2, { baseX,      baseY })
         elseif fx == "drop" then
             local oy = IS_SUB and 0.15 or 0.35
-            setKF(txt, "Center", {
-                [0]={baseX,baseY-oy}, [bF]={baseX,baseY+0.02}, [bF2]={baseX,baseY}
-            }, true)
+            kf(txt.Center, 0,   { baseX, baseY-oy   })
+            kf(txt.Center, bF,  { baseX, baseY+0.02 })
+            kf(txt.Center, bF2, { baseX, baseY      })
         elseif fx == "rise" then
             local oy = IS_SUB and 0.15 or 0.35
-            setKF(txt, "Center", {
-                [0]={baseX,baseY+oy}, [bF]={baseX,baseY-0.02}, [bF2]={baseX,baseY}
-            }, true)
+            kf(txt.Center, 0,   { baseX, baseY+oy   })
+            kf(txt.Center, bF,  { baseX, baseY-0.02 })
+            kf(txt.Center, bF2, { baseX, baseY      })
         elseif fx == "scale_pop" then
-            setKF(txt, "Size", {[0]=baseS*0.05, [bF]=baseS*1.22, [bF2]=baseS})
+            kf(txt.Size, 0,   baseS * 0.05)
+            kf(txt.Size, bF,  baseS * 1.22)
+            kf(txt.Size, bF2, baseS)
         elseif fx == "spin_in" then
-            setKF(txt, "Rotation", {[0]=-180, [bF]=8, [bF2]=0})
-            setKF(txt, "Size",     {[0]=baseS*0.05, [bF]=baseS})
+            kf(txt.Rotation, 0,   -180)
+            kf(txt.Rotation, bF,  8)
+            kf(txt.Rotation, bF2, 0)
+            kf(txt.Size, 0,  baseS * 0.05)
+            kf(txt.Size, bF, baseS)
         elseif fx == "shake" then
             local sf = math.max(1, math.floor(fps * 0.04))
-            setKF(txt, "Center", {
-                [0]   ={baseX+0.015,baseY},
-                [sf]  ={baseX-0.015,baseY},
-                [sf*2]={baseX+0.01, baseY},
-                [sf*3]={baseX-0.008,baseY},
-                [sf*4]={baseX,      baseY}
-            }, true)
+            kf(txt.Center, 0,     { baseX+0.015, baseY })
+            kf(txt.Center, sf,    { baseX-0.015, baseY })
+            kf(txt.Center, sf*2,  { baseX+0.01,  baseY })
+            kf(txt.Center, sf*3,  { baseX-0.008, baseY })
+            kf(txt.Center, sf*4,  { baseX,       baseY })
         end
     end
+
+    -- 시간을 0으로 복귀
+    comp:SetCurrentTime(0)
 
     -- ── 자막 배경 ────────────────────────────────
     if IS_SUB then
@@ -489,7 +502,7 @@ local function applyFusion(clip, text, fadeType, motionFX)
 end
 
 -- ── 메인 ─────────────────────────────────────────────
-print("=== DRV002 — DaVinci Lua ===")
+print("=== DRV003 — DaVinci Lua ===")
 print("줄: " .. #LINES .. " / 모드: " .. (IS_SUB and "자막" or "키네틱") .. " / FPS: " .. getFPS())
 
 local clips = timeline:GetItemListInTrack("video", 2)
@@ -537,7 +550,7 @@ function doSave(){
   const b=new Blob([buf],{type:'text/plain'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(b);
-  a.download='DRV002_'+mode+'_'+new Date().toISOString().slice(0,10)+'.lua';
+  a.download='DRV003_'+mode+'_'+new Date().toISOString().slice(0,10)+'.lua';
   a.click();
 }
 </script>
