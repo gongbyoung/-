@@ -315,6 +315,28 @@ local function getStEt(i)
     return st, et
 end
 
+-- ── 키프레임 헬퍼 (올바른 Fusion Lua API) ──────────────
+-- inp  : tool의 Input 객체 (tool:GetInput("InputName") 이 아닌 tool.InputName)
+-- kf   : { [프레임] = 값, ... } 테이블
+-- Point 타입이면 isPoint=true, 값은 {x, y} 테이블로 전달
+local function setKF(tool, inputName, kf, isPoint)
+    -- 입력값이 없으면 건너뜀
+    if not kf or not next(kf) then return end
+    -- 첫 번째 키프레임을 먼저 SetInput으로 설정해 채널 활성화
+    local frames = {}
+    for f, _ in pairs(kf) do table.insert(frames, f) end
+    table.sort(frames)
+    -- 애니메이션 모드 활성화: 아무 프레임에 값을 쓰면 자동으로 키프레임 생성
+    for _, f in ipairs(frames) do
+        local v = kf[f]
+        if isPoint then
+            tool[inputName]:SetValueAtTime(f, Point(v[1], v[2]))
+        else
+            tool[inputName]:SetValueAtTime(f, v)
+        end
+    end
+end
+
 -- ── Fusion 효과 적용 ─────────────────────────────────
 local function applyFusion(clip, text, st, et, fadeType, motionFX)
     local comp = clip:GetFusionCompByIndex(1)
@@ -325,107 +347,129 @@ local function applyFusion(clip, text, st, et, fadeType, motionFX)
     end
 
     comp:StartUndo("DRV000")
-    local fps    = getFPS()
-    local dur    = et - st
-    local totF   = math.floor(dur * fps)
-    local mOut   = comp:FindToolByID("MediaOut")
-    local fadeF  = math.floor(fps * 0.2)
-    local movF   = math.floor(fps * 0.22)
-    local bF     = math.floor(fps * 0.12)
-    local bF2    = math.floor(fps * 0.24)
-
-    -- Text+ 노드
-    local txt = comp:AddTool("TextPlus", -1, -1)
-    txt.StyledText = text
-    txt.Font       = FONT
-    txt.Style      = BOLD and "Bold" or "Regular"
-    txt.Size       = FS / 1000.0
-    txt.Red1       = TC[1]
-    txt.Green1     = TC[2]
-    txt.Blue1      = TC[3]
+    local fps  = getFPS()
+    local dur  = et - st
+    local totF = math.floor(dur * fps)
+    local mOut = comp:FindToolByID("MediaOut")
+    local fadeF = math.floor(fps * 0.2)
+    local movF  = math.floor(fps * 0.22)
+    local bF    = math.floor(fps * 0.12)
+    local bF2   = math.floor(fps * 0.24)
 
     local baseX = IS_SUB and SUB_X or 0.5
     local baseY = IS_SUB and SUB_Y or 0.5
-    local baseS = IS_SUB and (FS / 1000.0) or
-                  (AUTO_SC == "fit" and math.min(FS / 1000.0, 0.15) or FS / 1000.0)
-    txt.Center = {baseX, baseY}
-    txt.Size   = baseS
+    local baseS = FS / 1000.0
 
-    -- Fade In 투명도
-    txt.Alpha[0]      = 0
-    txt.Alpha[fadeF]  = 1
+    -- ── Text+ 노드 생성 ─────────────────────────────
+    local txt = comp:AddTool("TextPlus", -32768, 1)
+    -- 텍스트 내용 & 스타일
+    txt:SetInput("StyledText",  text)
+    txt:SetInput("Font",        FONT)
+    txt:SetInput("Style",       BOLD and "Bold" or "Regular")
+    txt:SetInput("Size",        baseS)
+    txt:SetInput("Red1",        TC[1])
+    txt:SetInput("Green1",      TC[2])
+    txt:SetInput("Blue1",       TC[3])
+    txt:SetInput("Alpha1",      1.0)
+    txt:SetInput("HorizontalJustificationNew", 1) -- 가운데 정렬
+    -- 초기 위치
+    txt:SetInput("Center", Point(baseX, baseY))
 
-    -- Fade Out (마지막 직전만)
+    -- ── Fade In/Out 투명도 ──────────────────────────
+    setKF(txt, "Alpha1", {[0]=0, [fadeF]=1})
     local foF = totF - math.floor(fps * 0.15)
     if foF > fadeF + 3 then
-        txt.Alpha[foF]  = 1
-        txt.Alpha[totF] = 0
+        setKF(txt, "Alpha1", {[foF]=1, [totF]=0})
     end
 
-    -- Fade 방향
+    -- ── Fade 방향 (위치/크기 키프레임) ─────────────
     if fadeType == "fade_h" then
-        txt["Center.X"][0] = baseX - 0.1
-        txt["Center.X"][movF] = baseX
+        setKF(txt, "Center", {
+            [0]    = {baseX - 0.1, baseY},
+            [movF] = {baseX,       baseY}
+        }, true)
     elseif fadeType == "fade_v" then
-        txt["Center.Y"][0] = baseY + (IS_SUB and 0.07 or -0.07)
-        txt["Center.Y"][movF] = baseY
+        local oy = IS_SUB and 0.07 or -0.07
+        setKF(txt, "Center", {
+            [0]    = {baseX, baseY + oy},
+            [movF] = {baseX, baseY}
+        }, true)
     elseif fadeType == "fade_diag" then
-        txt["Center.X"][0] = baseX - 0.08; txt["Center.X"][movF] = baseX
-        txt["Center.Y"][0] = baseY + 0.05; txt["Center.Y"][movF] = baseY
+        setKF(txt, "Center", {
+            [0]    = {baseX - 0.08, baseY + 0.05},
+            [movF] = {baseX,        baseY}
+        }, true)
     elseif fadeType == "fade_zoom_in" then
-        txt.Size[0] = baseS * 0.4; txt.Size[movF] = baseS
+        setKF(txt, "Size", {[0]=baseS*0.4, [movF]=baseS})
     elseif fadeType == "fade_zoom_out" then
-        txt.Size[0] = baseS * 1.7; txt.Size[movF] = baseS
+        setKF(txt, "Size", {[0]=baseS*1.7, [movF]=baseS})
     end
-    -- fade_none: 변화 없음
+    -- fade_none: 키프레임 없음
 
-    -- 모션 효과
+    -- ── 모션 효과 ───────────────────────────────────
     for _, fx in ipairs(motionFX) do
         if fx == "bounce" then
-            txt["Center.Y"][0]   = baseY + (IS_SUB and 0.08 or 0.15)
-            txt["Center.Y"][bF]  = baseY - 0.02
-            txt["Center.Y"][bF2] = baseY
+            local oy = IS_SUB and 0.08 or 0.15
+            setKF(txt, "Center", {
+                [0]   = {baseX, baseY + oy},
+                [bF]  = {baseX, baseY - 0.02},
+                [bF2] = {baseX, baseY}
+            }, true)
         elseif fx == "slide_l" then
-            txt["Center.X"][0]   = baseX - 0.35
-            txt["Center.X"][bF]  = baseX + 0.02
-            txt["Center.X"][bF2] = baseX
+            setKF(txt, "Center", {
+                [0]   = {baseX - 0.35, baseY},
+                [bF]  = {baseX + 0.02, baseY},
+                [bF2] = {baseX,        baseY}
+            }, true)
         elseif fx == "slide_r" then
-            txt["Center.X"][0]   = baseX + 0.35
-            txt["Center.X"][bF]  = baseX - 0.02
-            txt["Center.X"][bF2] = baseX
+            setKF(txt, "Center", {
+                [0]   = {baseX + 0.35, baseY},
+                [bF]  = {baseX - 0.02, baseY},
+                [bF2] = {baseX,        baseY}
+            }, true)
         elseif fx == "drop" then
-            txt["Center.Y"][0]   = baseY - (IS_SUB and 0.15 or 0.35)
-            txt["Center.Y"][bF]  = baseY + 0.02
-            txt["Center.Y"][bF2] = baseY
+            local oy = IS_SUB and 0.15 or 0.35
+            setKF(txt, "Center", {
+                [0]   = {baseX, baseY - oy},
+                [bF]  = {baseX, baseY + 0.02},
+                [bF2] = {baseX, baseY}
+            }, true)
         elseif fx == "rise" then
-            txt["Center.Y"][0]   = baseY + (IS_SUB and 0.15 or 0.35)
-            txt["Center.Y"][bF]  = baseY - 0.02
-            txt["Center.Y"][bF2] = baseY
+            local oy = IS_SUB and 0.15 or 0.35
+            setKF(txt, "Center", {
+                [0]   = {baseX, baseY + oy},
+                [bF]  = {baseX, baseY - 0.02},
+                [bF2] = {baseX, baseY}
+            }, true)
         elseif fx == "scale_pop" then
-            txt.Size[0]   = baseS * 0.05
-            txt.Size[bF]  = baseS * 1.22
-            txt.Size[bF2] = baseS
+            setKF(txt, "Size", {
+                [0]   = baseS * 0.05,
+                [bF]  = baseS * 1.22,
+                [bF2] = baseS
+            })
         elseif fx == "spin_in" then
-            txt.Angle[0]  = -180; txt.Angle[bF] = 8; txt.Angle[bF2] = 0
-            txt.Size[0]   = baseS * 0.05; txt.Size[bF] = baseS
+            setKF(txt, "Rotation", {[0]=-180, [bF]=8, [bF2]=0})
+            setKF(txt, "Size",     {[0]=baseS*0.05, [bF]=baseS})
         elseif fx == "shake" then
             local sf = math.floor(fps * 0.04)
-            txt["Center.X"][0]      = baseX + 0.015
-            txt["Center.X"][sf]     = baseX - 0.015
-            txt["Center.X"][sf * 2] = baseX + 0.01
-            txt["Center.X"][sf * 3] = baseX - 0.008
-            txt["Center.X"][sf * 4] = baseX
+            setKF(txt, "Center", {
+                [0]      = {baseX + 0.015, baseY},
+                [sf]     = {baseX - 0.015, baseY},
+                [sf*2]   = {baseX + 0.01,  baseY},
+                [sf*3]   = {baseX - 0.008, baseY},
+                [sf*4]   = {baseX,         baseY}
+            }, true)
         end
     end
 
-    -- 자막 배경 (자막 모드 전용)
+    -- ── 자막 배경 (자막 모드 전용) ──────────────────
     if IS_SUB then
-        local bg2 = comp:AddTool("Background", -1, -1)
-        bg2.TopLeftRed   = BGC[1]
-        bg2.TopLeftGreen = BGC[2]
-        bg2.TopLeftBlue  = BGC[3]
-        bg2.TopLeftAlpha = BGC[4] or ${ba}
-        local mg = comp:AddTool("Merge", -1, -1)
+        local bg2 = comp:AddTool("Background", -32768, 2)
+        bg2:SetInput("TopLeftRed",   BGC[1])
+        bg2:SetInput("TopLeftGreen", BGC[2])
+        bg2:SetInput("TopLeftBlue",  BGC[3])
+        bg2:SetInput("TopLeftAlpha", BGC[4] or ${ba})
+        local mg = comp:AddTool("Merge", -32768, 3)
         mg:ConnectInput("Background", bg2)
         mg:ConnectInput("Foreground", txt)
         if mOut then mOut:ConnectInput("Input", mg) end
