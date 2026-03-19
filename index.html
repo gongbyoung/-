@@ -2,763 +2,673 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>AE Kinetic Typo Pro v6.1</title>
+<title>Kinetic Typo Pro — AE & DaVinci</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+KR:wght@300;400;700;900&display=swap');
-
-:root {
-  --bg: #080810;
-  --surface: #0f0f1a;
-  --panel: #13131f;
-  --border: #1e1e30;
-  --accent: #00e5ff;
-  --pink: #ff2d78;
-  --gold: #ffd000;
-  --green: #00ff88;
-  --text: #c8c8e0;
-  --dim: #55556a;
-  --r: 8px;
-}
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  font-family: 'Noto Sans KR', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.hdr {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 10px 20px;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-}
-.logo { font-family: 'Space Mono', monospace; font-size: 12px; font-weight: 700; color: var(--accent); letter-spacing: 2px; }
-.logo em { color: var(--pink); font-style: normal; }
-.badge { font-family: 'Space Mono', monospace; font-size: 9px; background: var(--pink); color: #fff; padding: 3px 7px; border-radius: 4px; }
-
-.main { display: flex; flex: 1; overflow: hidden; }
-
-.left {
-  width: 300px; flex-shrink: 0;
-  display: flex; flex-direction: column;
-  padding: 14px; gap: 8px;
-  border-right: 1px solid var(--border);
-}
-.slabel { font-size: 10px; font-weight: 700; color: var(--dim); letter-spacing: 1.5px; text-transform: uppercase; }
-textarea {
-  flex: 1;
-  background: #050508; color: var(--accent);
-  border: 1px solid var(--border);
-  padding: 14px;
-  font-family: 'Space Mono', monospace; font-size: 13px;
-  border-radius: var(--r); outline: none; line-height: 1.8; resize: none;
-}
-textarea:focus { border-color: var(--accent); }
-
-.right {
-  flex: 1; overflow-y: auto;
-  padding: 14px;
-}
-.right::-webkit-scrollbar { width: 4px; }
-.right::-webkit-scrollbar-thumb { background: #2a2a40; border-radius: 2px; }
-
-.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.full  { grid-column: 1 / -1; }
-
-.card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r);
-  overflow: hidden;
-}
-.card-hdr {
-  display: flex; align-items: center; gap: 7px;
-  padding: 7px 11px;
-  border-bottom: 1px solid var(--border);
-  background: rgba(255,255,255,0.02);
-}
-.dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
-.card-title { font-size: 9px; font-weight: 700; letter-spacing: 1.8px; text-transform: uppercase; color: var(--dim); }
-.card-body { padding: 10px 11px; display: flex; flex-direction: column; gap: 8px; }
-
-.field { display: flex; flex-direction: column; gap: 4px; }
-.flabel { font-size: 9px; font-weight: 700; color: var(--dim); letter-spacing: 1px; text-transform: uppercase; }
-
-input[type=text], input[type=number], select {
-  padding: 7px 9px;
-  background: #050508; border: 1px solid var(--border);
-  color: var(--text); border-radius: 6px;
-  font-size: 12px; font-family: 'Noto Sans KR', sans-serif;
-  outline: none; width: 100%;
-}
-input[type=text]:focus, input[type=number]:focus, select:focus { border-color: var(--accent); }
-
-input[type=range] {
-  -webkit-appearance: none; width: 100%; height: 3px;
-  background: var(--border); border-radius: 2px; outline: none;
-}
-input[type=range]::-webkit-slider-thumb {
-  -webkit-appearance: none; width: 12px; height: 12px;
-  border-radius: 50%; background: var(--accent); cursor: pointer;
-}
-.rrow { display: flex; align-items: center; gap: 8px; }
-.rval { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--accent); min-width: 32px; text-align: right; }
-
-input[type=color] {
-  width: 100%; height: 30px; border-radius: 6px;
-  border: 1px solid var(--border); background: transparent; cursor: pointer; padding: 2px;
-}
-
-.mode2 { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
-.mbtn {
-  padding: 9px 5px; border-radius: 7px;
-  border: 1px solid var(--border); background: transparent;
-  color: var(--dim); font-family: 'Noto Sans KR', sans-serif;
-  font-size: 11px; font-weight: 700; cursor: pointer; transition: all .15s; text-align: center;
-}
-.mbtn.on-full { border-color: var(--accent); background: rgba(0,229,255,.08); color: var(--accent); }
-.mbtn.on-sub  { border-color: var(--gold);   background: rgba(255,208,0,.08);  color: var(--gold); }
-
-.posgrid { display: grid; grid-template-columns: repeat(3,1fr); gap: 4px; }
-.pbtn {
-  padding: 5px 2px; border-radius: 5px;
-  border: 1px solid var(--border); background: transparent;
-  color: var(--dim); font-size: 9px; cursor: pointer; transition: all .15s; text-align: center;
-}
-.pbtn.on { border-color: var(--gold); background: rgba(255,208,0,.08); color: var(--gold); }
-
-.chips { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; }
-.chip {
-  display: flex; align-items: center; gap: 5px;
-  padding: 6px 7px; border-radius: 6px;
-  border: 1px solid var(--border); background: transparent;
-  cursor: pointer; transition: all .15s;
-  font-size: 10px; color: var(--dim); font-weight: 600;
-}
-.chip input { display: none; }
-.cdot { width: 6px; height: 6px; border-radius: 50%; border: 1px solid currentColor; flex-shrink: 0; }
-.chips.motion .chip:has(input:checked) { border-color: var(--pink); background: rgba(255,45,120,.08); color: var(--text); }
-.chips.motion .chip:has(input:checked) .cdot { background: var(--pink); border-color: var(--pink); }
-.chips.fade   .chip:has(input:checked) { border-color: var(--gold); background: rgba(255,208,0,.07); color: var(--text); }
-.chips.fade   .chip:has(input:checked) .cdot { background: var(--gold); border-color: var(--gold); }
-
-.selrow { display: flex; gap: 4px; }
-.selbtn {
-  flex: 1; padding: 5px; border-radius: 5px;
-  border: 1px solid var(--border); background: transparent;
-  color: var(--dim); font-size: 9px; font-weight: 700;
-  letter-spacing: .8px; cursor: pointer; text-transform: uppercase; transition: all .15s;
-}
-.selbtn:hover { border-color: var(--accent); color: var(--accent); }
-
-.subonly { display: none; }
-.subonly.show { display: flex; flex-direction: column; gap: 8px; }
-
-.actbar {
-  padding: 11px 14px; display: flex; flex-direction: column; gap: 6px;
-  border-top: 1px solid var(--border);
-  background: var(--surface); flex-shrink: 0;
-}
-.btn {
-  width: 100%; padding: 12px; font-weight: 700;
-  border: none; border-radius: var(--r);
-  cursor: pointer; font-size: 13px;
-  font-family: 'Noto Sans KR', sans-serif; transition: all .2s;
-}
-.btn-gen { background: var(--pink); color: #fff; }
-.btn-gen:hover { filter: brightness(1.1); }
-.btn-dl { background: transparent; color: var(--green); border: 1px solid var(--green); display: none; }
-.btn-dl:hover { background: rgba(0,255,136,.08); }
-.status { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--dim); text-align: center; }
-.status.ok  { color: var(--green); }
-.status.err { color: var(--pink); }
-
-.infobox { font-size: 9px; color: var(--dim); line-height: 1.6; padding: 6px 8px; background: rgba(255,208,0,.04); border: 1px solid rgba(255,208,0,.15); border-radius: 5px; }
+:root{--bg:#080810;--sf:#0f0f1a;--bd:#1e1e30;--ac:#00e5ff;--pk:#ff2d78;--gd:#ffd000;--gn:#00ff88;--dv:#b97bff;--tx:#c8c8e0;--dm:#55556a;--r:8px;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--tx);height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:9px 18px;background:var(--sf);border-bottom:1px solid var(--bd);flex-shrink:0;}
+.logo{font-family:'Space Mono',monospace;font-size:12px;font-weight:700;color:var(--ac);letter-spacing:2px;}
+.logo em{color:var(--pk);font-style:normal;}
+.tabbar{display:flex;border-bottom:1px solid var(--bd);background:var(--sf);flex-shrink:0;}
+.tab{padding:10px 26px;font-size:12px;font-weight:700;cursor:pointer;border:none;background:transparent;color:var(--dm);border-bottom:2px solid transparent;transition:all .15s;font-family:'Noto Sans KR',sans-serif;display:flex;align-items:center;gap:7px;}
+.tab.ae-on{color:var(--pk);border-bottom-color:var(--pk);background:rgba(255,45,120,.04);}
+.tab.dv-on{color:var(--dv);border-bottom-color:var(--dv);background:rgba(185,123,255,.04);}
+.tbadge{font-family:'Space Mono',monospace;font-size:8px;padding:2px 5px;border-radius:3px;}
+.ae-b{background:var(--pk);color:#fff;}.dv-b{background:var(--dv);color:#fff;}
+.page{display:none;flex:1;overflow:hidden;flex-direction:column;}
+.page.active{display:flex;}
+.main{display:flex;flex:1;overflow:hidden;}
+.left{width:290px;flex-shrink:0;display:flex;flex-direction:column;padding:12px;gap:8px;border-right:1px solid var(--bd);}
+.slabel{font-size:10px;font-weight:700;color:var(--dm);letter-spacing:1.5px;text-transform:uppercase;}
+textarea{flex:1;background:#050508;color:var(--ac);border:1px solid var(--bd);padding:12px;font-family:'Space Mono',monospace;font-size:13px;border-radius:var(--r);outline:none;line-height:1.8;resize:none;}
+textarea:focus{border-color:var(--ac);}
+.right{flex:1;overflow-y:auto;padding:12px;}
+.right::-webkit-scrollbar{width:4px;}.right::-webkit-scrollbar-thumb{background:#2a2a40;border-radius:2px;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+.full{grid-column:1/-1;}
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;}
+.ch{display:flex;align-items:center;gap:7px;padding:7px 11px;border-bottom:1px solid var(--bd);background:rgba(255,255,255,.02);}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--ac);flex-shrink:0;}
+.ct{font-size:9px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--dm);}
+.cb{padding:9px 11px;display:flex;flex-direction:column;gap:7px;}
+.field{display:flex;flex-direction:column;gap:4px;}
+.fl{font-size:9px;font-weight:700;color:var(--dm);letter-spacing:1px;text-transform:uppercase;}
+input[type=text],input[type=number],select{padding:7px 9px;background:#050508;border:1px solid var(--bd);color:var(--tx);border-radius:6px;font-size:12px;font-family:'Noto Sans KR',sans-serif;outline:none;width:100%;}
+input[type=text]:focus,input[type=number]:focus,select:focus{border-color:var(--ac);}
+input[type=range]{-webkit-appearance:none;width:100%;height:3px;background:var(--bd);border-radius:2px;outline:none;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:var(--ac);cursor:pointer;}
+.rrow{display:flex;align-items:center;gap:8px;}
+.rv{font-family:'Space Mono',monospace;font-size:11px;color:var(--ac);min-width:32px;text-align:right;}
+input[type=color]{width:100%;height:30px;border-radius:6px;border:1px solid var(--bd);background:transparent;cursor:pointer;padding:2px;}
+.chips{display:grid;grid-template-columns:1fr 1fr;gap:3px;}
+.chip{display:flex;align-items:center;gap:5px;padding:6px 7px;border-radius:6px;border:1px solid var(--bd);background:transparent;cursor:pointer;transition:all .15s;font-size:10px;color:var(--dm);font-weight:600;}
+.chip input{display:none;}
+.cd{width:6px;height:6px;border-radius:50%;border:1px solid currentColor;flex-shrink:0;}
+.chips.mo .chip:has(input:checked){border-color:var(--pk);background:rgba(255,45,120,.08);color:var(--tx);}
+.chips.mo .chip:has(input:checked) .cd{background:var(--pk);border-color:var(--pk);}
+.chips.fa .chip:has(input:checked){border-color:var(--gd);background:rgba(255,208,0,.07);color:var(--tx);}
+.chips.fa .chip:has(input:checked) .cd{background:var(--gd);border-color:var(--gd);}
+.chips.dv .chip:has(input:checked){border-color:var(--dv);background:rgba(185,123,255,.08);color:var(--tx);}
+.chips.dv .chip:has(input:checked) .cd{background:var(--dv);border-color:var(--dv);}
+.sr{display:flex;gap:4px;}
+.sb{flex:1;padding:5px;border-radius:5px;border:1px solid var(--bd);background:transparent;color:var(--dm);font-size:9px;font-weight:700;letter-spacing:.8px;cursor:pointer;text-transform:uppercase;transition:all .15s;}
+.sb:hover{border-color:var(--ac);color:var(--ac);}
+.m2{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
+.mb{padding:9px 5px;border-radius:7px;border:1px solid var(--bd);background:transparent;color:var(--dm);font-family:'Noto Sans KR',sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;text-align:center;}
+.mb.of{border-color:var(--ac);background:rgba(0,229,255,.08);color:var(--ac);}
+.mb.os{border-color:var(--gd);background:rgba(255,208,0,.08);color:var(--gd);}
+.pg{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;}
+.pb{padding:5px 2px;border-radius:5px;border:1px solid var(--bd);background:transparent;color:var(--dm);font-size:9px;cursor:pointer;transition:all .15s;text-align:center;}
+.pb.on{border-color:var(--gd);background:rgba(255,208,0,.08);color:var(--gd);}
+.subx{display:none;}.subx.show{display:flex;flex-direction:column;gap:7px;}
+.actbar{padding:10px 13px;display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--bd);background:var(--sf);flex-shrink:0;}
+.btn{width:100%;padding:11px;font-weight:700;border:none;border-radius:var(--r);cursor:pointer;font-size:13px;font-family:'Noto Sans KR',sans-serif;transition:all .2s;}
+.bae{background:var(--pk);color:#fff;}.bae:hover{filter:brightness(1.1);}
+.bdv{background:var(--dv);color:#fff;}.bdv:hover{filter:brightness(1.1);}
+.bdl{background:transparent;color:var(--gn);border:1px solid var(--gn);display:none;}.bdl:hover{background:rgba(0,255,136,.08);}
+.st{font-family:'Space Mono',monospace;font-size:10px;color:var(--dm);text-align:center;}
+.st.ok{color:var(--gn);}.st.err{color:var(--pk);}
+.ib{font-size:9px;color:var(--dm);line-height:1.6;padding:6px 8px;background:rgba(255,208,0,.04);border:1px solid rgba(255,208,0,.15);border-radius:5px;}
+.ib.dv{background:rgba(185,123,255,.04);border-color:rgba(185,123,255,.2);}
+#dv input[type=range]::-webkit-slider-thumb{background:var(--dv);}
+#dv .rv{color:var(--dv);}
 </style>
 </head>
 <body>
-
 <div class="hdr">
-  <div class="logo">AE <em>KINETIC</em> TYPO</div>
-  <div style="display:flex;align-items:center;gap:10px">
-    <span style="font-size:10px;color:var(--dim)">After Effects JSX Generator</span>
-    <span class="badge">v6.1</span>
-  </div>
+  <div class="logo">KINETIC <em>TYPO</em> PRO</div>
+  <span style="font-size:10px;color:var(--dm)">AE JSX &amp; DaVinci Lua Generator</span>
+</div>
+<div class="tabbar">
+  <button class="tab ae-on" id="tae" onclick="sw('ae')">🎬 After Effects <span class="tbadge ae-b">JSX</span></button>
+  <button class="tab" id="tdv" onclick="sw('dv')">🎥 DaVinci Resolve <span class="tbadge dv-b">LUA</span></button>
 </div>
 
+<!-- ══ AE PAGE ══ -->
+<div class="page active" id="ae">
 <div class="main">
+<div class="left">
+  <div class="slabel">가사 / 자막 입력</div>
+  <textarea id="ae-tx" placeholder="한 줄 = 마커 1개&#10;&#10;Hello World&#10;안녕하세요&#10;Kinetic Typography"></textarea>
+  <div class="ib">💡 <b>마커 모드</b>: 음악 레이어 선택 후 실행<br>줄 수 = 마커 수 일치 필요<br><span style="color:var(--gd)">[ ]줄은 무시됩니다</span></div>
+</div>
+<div class="right"><div class="g2">
 
-  <!-- Left -->
-  <div class="left">
-    <div class="slabel">가사 / 자막 입력</div>
-    <textarea id="lyricsArea" placeholder="한 줄 = 마커 1개&#10;&#10;예시:&#10;Hello World&#10;안녕하세요&#10;Kinetic Typography"></textarea>
-    <div class="infobox">
-      💡 <b>마커 모드 사용법</b><br>
-      1. 음악 레이어에 마커 추가<br>
-      2. 음악 레이어 선택 후 스크립트 실행<br>
-      3. 줄 수 = 마커 수가 맞아야 함<br>
-      <span style="color:var(--gold)">[ ]로 시작하는 줄은 무시</span>
+<!-- 모드 -->
+<div class="card full"><div class="ch"><div class="dot" style="background:var(--gd)"></div><div class="ct">표시 모드</div></div><div class="cb">
+  <div class="m2">
+    <button class="mb of" id="ae-mf" onclick="aeM('full')">🖥 전체화면<br><span style="font-size:9px;font-weight:400;opacity:.7">가사/MV</span></button>
+    <button class="mb" id="ae-ms" onclick="aeM('sub')">📺 자막<br><span style="font-size:9px;font-weight:400;opacity:.7">하단 고정</span></button>
+  </div>
+  <div class="subx" id="ae-sx">
+    <div class="field"><div class="fl">자막 위치</div>
+      <div class="pg">
+        <button class="pb" onclick="aeP('top_L',this)">↖ 좌상단</button><button class="pb" onclick="aeP('top_C',this)">↑ 상단</button><button class="pb" onclick="aeP('top_R',this)">↗ 우상단</button>
+        <button class="pb" onclick="aeP('mid_L',this)">← 좌중간</button><button class="pb" onclick="aeP('mid_C',this)">· 중앙</button><button class="pb" onclick="aeP('mid_R',this)">→ 우중간</button>
+        <button class="pb" onclick="aeP('bot_L',this)">↙ 좌하단</button><button class="pb on" onclick="aeP('bot_C',this)">↓ 하단</button><button class="pb" onclick="aeP('bot_R',this)">↘ 우하단</button>
+      </div>
+    </div>
+    <div class="field"><div class="fl">자막 영역 높이</div>
+      <div class="rrow"><input type="range" id="ae-sh" min="5" max="40" value="18" oninput="document.getElementById('ae-shv').textContent=this.value+'%'"><span class="rv" id="ae-shv">18%</span></div>
     </div>
   </div>
+</div></div>
 
-  <!-- Right -->
-  <div class="right">
-    <div class="grid2">
+<!-- 배치 + 크기 -->
+<div class="card"><div class="ch"><div class="dot"></div><div class="ct">배치</div></div><div class="cb">
+  <div class="field"><select id="ae-sync"><option value="marker">마커 기준 ⭐</option><option value="linear">균등분할 (줄당 2초)</option></select></div>
+</div></div>
 
-      <!-- 모드 -->
-      <div class="card full">
-        <div class="card-hdr"><div class="dot" style="background:var(--gold)"></div><div class="card-title">표시 모드</div></div>
-        <div class="card-body">
-          <div class="mode2">
-            <button class="mbtn on-full" id="mFullBtn" onclick="setMode('full')">🖥 전체화면<br><span style="font-size:9px;font-weight:400;opacity:.7">가사/MV 스타일</span></button>
-            <button class="mbtn" id="mSubBtn" onclick="setMode('subtitle')">📺 자막<br><span style="font-size:9px;font-weight:400;opacity:.7">화면 일부 고정</span></button>
-          </div>
-          <div class="subonly" id="subExtras">
-            <div class="field">
-              <div class="flabel">자막 위치</div>
-              <div class="posgrid">
-                <button class="pbtn" onclick="setSub('top_L',this)">↖ 좌상단</button>
-                <button class="pbtn" onclick="setSub('top_C',this)">↑ 상단중앙</button>
-                <button class="pbtn" onclick="setSub('top_R',this)">↗ 우상단</button>
-                <button class="pbtn" onclick="setSub('mid_L',this)">← 좌중간</button>
-                <button class="pbtn" onclick="setSub('mid_C',this)">· 중앙</button>
-                <button class="pbtn" onclick="setSub('mid_R',this)">→ 우중간</button>
-                <button class="pbtn" onclick="setSub('bot_L',this)">↙ 좌하단</button>
-                <button class="pbtn on" onclick="setSub('bot_C',this)">↓ 하단중앙</button>
-                <button class="pbtn" onclick="setSub('bot_R',this)">↘ 우하단</button>
-              </div>
-            </div>
-            <div class="field">
-              <div class="flabel">자막 영역 높이</div>
-              <div class="rrow">
-                <input type="range" id="subH" min="5" max="40" value="18" oninput="document.getElementById('subHv').textContent=this.value+'%'">
-                <span class="rval" id="subHv">18%</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 배치 방식 -->
-      <div class="card">
-        <div class="card-hdr"><div class="dot"></div><div class="card-title">배치 방식</div></div>
-        <div class="card-body">
-          <div class="field">
-            <select id="syncMode">
-              <option value="marker">마커 기준 ⭐</option>
-              <option value="linear">균등분할 (줄당 2초)</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <!-- 크기 -->
-      <div class="card">
-        <div class="card-hdr"><div class="dot" style="background:var(--accent)"></div><div class="card-title">크기 설정</div></div>
-        <div class="card-body">
-          <div class="field">
-            <div class="flabel">글자 크기 (px)</div>
-            <div class="rrow">
-              <input type="range" id="fontSize" min="20" max="300" value="120" oninput="syncFS(this.value)">
-              <span class="rval" id="fsv">120</span>
-            </div>
-            <input type="number" id="fsNum" value="120" min="1" max="9999" oninput="syncFSN(this.value)">
-          </div>
-          <div class="field">
-            <div class="flabel">자동 스케일</div>
-            <select id="autoScale">
-              <option value="fit">화면에 맞게 자동</option>
-              <option value="fixed">고정 (입력 크기)</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <!-- 폰트 -->
-      <div class="card full">
-        <div class="card-hdr"><div class="dot" style="background:var(--accent)"></div><div class="card-title">폰트 & 색상</div></div>
-        <div class="card-body">
-          <div class="grid2" style="gap:8px">
-            <div class="field">
-              <div class="flabel">폰트 프리셋</div>
-              <select id="fontPreset" onchange="applyPreset()">
-                <option value="">직접 입력</option>
-                <optgroup label="Sans Serif">
-                  <option value="Arial-Black">Arial Black</option>
-                  <option value="Impact">Impact</option>
-                  <option value="Helvetica-Bold">Helvetica Bold</option>
-                  <option value="Futura-Bold">Futura Bold</option>
-                  <option value="Verdana-Bold">Verdana Bold</option>
-                </optgroup>
-                <optgroup label="한국어">
-                  <option value="NanumGothicExtraBold">나눔고딕 ExtraBold</option>
-                  <option value="NanumSquareEB">나눔스퀘어 EB</option>
-                  <option value="NotoSansKR-Black">Noto Sans KR Black</option>
-                  <option value="GmarketSansBold">Gmarket Sans Bold</option>
-                  <option value="BlackHanSans-Regular">검은고딕</option>
-                </optgroup>
-                <optgroup label="Serif">
-                  <option value="Georgia-Bold">Georgia Bold</option>
-                  <option value="TimesNewRomanPS-BoldMT">Times New Roman Bold</option>
-                </optgroup>
-                <optgroup label="Monospace">
-                  <option value="Courier-Bold">Courier Bold</option>
-                </optgroup>
-              </select>
-            </div>
-            <div class="field">
-              <div class="flabel">폰트 직접 입력</div>
-              <input type="text" id="fontName" value="Arial-Black" placeholder="AE 폰트 영문명">
-            </div>
-          </div>
-          <div class="grid2" style="gap:8px">
-            <div class="field">
-              <div class="flabel">글자 색상</div>
-              <input type="color" id="fontColor" value="#ffffff">
-            </div>
-            <div class="field">
-              <div class="flabel">획(Stroke) 색상</div>
-              <input type="color" id="strokeColor" value="#000000">
-            </div>
-          </div>
-          <div class="field">
-            <div class="flabel">획 두께 (0 = 없음)</div>
-            <div class="rrow">
-              <input type="range" id="strokeW" min="0" max="30" value="0" oninput="document.getElementById('strokeWv').textContent=this.value">
-              <span class="rval" id="strokeWv">0</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Fade In -->
-      <div class="card">
-        <div class="card-hdr"><div class="dot" style="background:var(--gold)"></div><div class="card-title">Fade In 방향</div></div>
-        <div class="card-body">
-          <div class="field">
-            <select id="fadeMode">
-              <option value="random">랜덤 믹스</option>
-              <option value="fixed">고정 (첫번째)</option>
-            </select>
-          </div>
-          <div class="selrow">
-            <button class="selbtn" onclick="selFade(1)">전체선택</button>
-            <button class="selbtn" onclick="selFade(0)">전체해제</button>
-          </div>
-          <div class="chips fade" id="fadePool">
-            <label class="chip"><input type="checkbox" value="fade_h" checked><div class="cdot"></div>→ 가로</label>
-            <label class="chip"><input type="checkbox" value="fade_v" checked><div class="cdot"></div>↓ 세로</label>
-            <label class="chip"><input type="checkbox" value="fade_diag_tl" checked><div class="cdot"></div>↘ 대각(좌→우)</label>
-            <label class="chip"><input type="checkbox" value="fade_diag_tr"><div class="cdot"></div>↙ 대각(우→좌)</label>
-            <label class="chip"><input type="checkbox" value="fade_zoom_in" checked><div class="cdot"></div>⊕ 줌인</label>
-            <label class="chip"><input type="checkbox" value="fade_zoom_out"><div class="cdot"></div>⊖ 줌아웃</label>
-          </div>
-        </div>
-      </div>
-
-      <!-- 모션 효과 -->
-      <div class="card">
-        <div class="card-hdr"><div class="dot" style="background:var(--pink)"></div><div class="card-title">모션 효과 풀</div></div>
-        <div class="card-body">
-          <div class="selrow">
-            <button class="selbtn" onclick="selFX(1)">전체선택</button>
-            <button class="selbtn" onclick="selFX(0)">전체해제</button>
-          </div>
-          <div class="chips motion" id="effectPool">
-            <label class="chip"><input type="checkbox" value="pop" checked><div class="cdot"></div>Pop Bounce</label>
-            <label class="chip"><input type="checkbox" value="side_L" checked><div class="cdot"></div>Elastic L</label>
-            <label class="chip"><input type="checkbox" value="side_R" checked><div class="cdot"></div>Elastic R</label>
-            <label class="chip"><input type="checkbox" value="top" checked><div class="cdot"></div>Drop Down</label>
-            <label class="chip"><input type="checkbox" value="bottom" checked><div class="cdot"></div>Rise Up</label>
-            <label class="chip"><input type="checkbox" value="zoom" checked><div class="cdot"></div>Power Zoom</label>
-            <label class="chip"><input type="checkbox" value="glitch" checked><div class="cdot"></div>Glitch</label>
-            <label class="chip"><input type="checkbox" value="swing" checked><div class="cdot"></div>Swing</label>
-            <label class="chip"><input type="checkbox" value="blur" checked><div class="cdot"></div>Blur In</label>
-            <label class="chip"><input type="checkbox" value="typewriter"><div class="cdot"></div>Typewriter</label>
-            <label class="chip"><input type="checkbox" value="wave" checked><div class="cdot"></div>Wave Move</label>
-            <label class="chip"><input type="checkbox" value="flash" checked><div class="cdot"></div>Flash In</label>
-            <label class="chip"><input type="checkbox" value="rubber"><div class="cdot"></div>Rubber Band</label>
-            <label class="chip"><input type="checkbox" value="spin"><div class="cdot"></div>Spin Drop</label>
-          </div>
-        </div>
-      </div>
-
-    </div>
+<div class="card"><div class="ch"><div class="dot" style="background:var(--ac)"></div><div class="ct">크기</div></div><div class="cb">
+  <div class="field"><div class="fl">글자 크기 (px)</div>
+    <div class="rrow"><input type="range" id="ae-fs" min="20" max="300" value="120" oninput="aeSy(this.value)"><span class="rv" id="ae-fsv">120</span></div>
+    <input type="number" id="ae-fsn" value="120" min="1" max="9999" oninput="aeSyN(this.value)">
   </div>
+  <div class="field" id="ae-asf"><div class="fl">자동 스케일 <span style="color:var(--ac);font-size:8px">(전체화면)</span></div>
+    <select id="ae-as"><option value="fit">화면에 맞게 자동</option><option value="fixed">고정</option></select>
+  </div>
+  <div id="ae-sn" style="display:none;font-size:9px;color:var(--gd);background:rgba(255,208,0,.06);border:1px solid rgba(255,208,0,.2);border-radius:5px;padding:6px 8px;line-height:1.6">📌 자막: 글자 크기 고정<br>모든 줄 동일한 크기</div>
+</div></div>
+
+<!-- 폰트 -->
+<div class="card full"><div class="ch"><div class="dot" style="background:var(--ac)"></div><div class="ct">폰트 & 색상</div></div><div class="cb">
+  <div class="g2" style="gap:8px">
+    <div class="field"><div class="fl">프리셋</div>
+      <select id="ae-fp" onchange="aePreset()">
+        <option value="">직접 입력</option>
+        <optgroup label="Sans"><option value="Arial-Black">Arial Black</option><option value="Impact">Impact</option><option value="Helvetica-Bold">Helvetica Bold</option><option value="Futura-Bold">Futura Bold</option></optgroup>
+        <optgroup label="한국어"><option value="NanumGothicExtraBold">나눔고딕 ExtraBold</option><option value="NanumSquareEB">나눔스퀘어 EB</option><option value="NotoSansKR-Black">Noto Sans KR Black</option><option value="GmarketSansBold">Gmarket Sans Bold</option><option value="BlackHanSans-Regular">검은고딕</option></optgroup>
+        <optgroup label="Serif/Mono"><option value="Georgia-Bold">Georgia Bold</option><option value="Courier-Bold">Courier Bold</option></optgroup>
+      </select>
+    </div>
+    <div class="field"><div class="fl">직접 입력</div><input type="text" id="ae-fn" value="Arial-Black" placeholder="AE 폰트 영문명"></div>
+  </div>
+  <div class="g2" style="gap:8px">
+    <div class="field"><div class="fl">글자 색상</div><input type="color" id="ae-fc" value="#ffffff"></div>
+    <div class="field"><div class="fl">획 색상</div><input type="color" id="ae-sc" value="#000000"></div>
+  </div>
+  <div class="field"><div class="fl">획 두께 (0=없음)</div>
+    <div class="rrow"><input type="range" id="ae-sw" min="0" max="30" value="0" oninput="document.getElementById('ae-swv').textContent=this.value"><span class="rv" id="ae-swv">0</span></div>
+  </div>
+</div></div>
+
+<!-- Fade -->
+<div class="card"><div class="ch"><div class="dot" style="background:var(--gd)"></div><div class="ct">Fade In 방향</div></div><div class="cb">
+  <div class="field"><select id="ae-fm"><option value="random">랜덤 믹스</option><option value="fixed">고정 (첫번째)</option></select></div>
+  <div class="sr"><button class="sb" onclick="sa('#ae-fp2',1)">전체선택</button><button class="sb" onclick="sa('#ae-fp2',0)">전체해제</button></div>
+  <div class="chips fa" id="ae-fp2">
+    <label class="chip"><input type="checkbox" value="fade_h" checked><div class="cd"></div>→ 가로</label>
+    <label class="chip"><input type="checkbox" value="fade_v" checked><div class="cd"></div>↓ 세로</label>
+    <label class="chip"><input type="checkbox" value="fade_diag_tl" checked><div class="cd"></div>↘ 대각(좌→우)</label>
+    <label class="chip"><input type="checkbox" value="fade_diag_tr"><div class="cd"></div>↙ 대각(우→좌)</label>
+    <label class="chip"><input type="checkbox" value="fade_zoom_in" checked><div class="cd"></div>⊕ 줌인</label>
+    <label class="chip"><input type="checkbox" value="fade_zoom_out"><div class="cd"></div>⊖ 줌아웃</label>
+  </div>
+</div></div>
+
+<!-- 모션 -->
+<div class="card"><div class="ch"><div class="dot" style="background:var(--pk)"></div><div class="ct">모션 효과 풀</div></div><div class="cb">
+  <div class="sr"><button class="sb" onclick="sa('#ae-fx',1)">전체선택</button><button class="sb" onclick="sa('#ae-fx',0)">전체해제</button></div>
+  <div class="chips mo" id="ae-fx">
+    <label class="chip"><input type="checkbox" value="pop" checked><div class="cd"></div>Pop Bounce</label>
+    <label class="chip"><input type="checkbox" value="side_L" checked><div class="cd"></div>Elastic L</label>
+    <label class="chip"><input type="checkbox" value="side_R" checked><div class="cd"></div>Elastic R</label>
+    <label class="chip"><input type="checkbox" value="top" checked><div class="cd"></div>Drop Down</label>
+    <label class="chip"><input type="checkbox" value="bottom" checked><div class="cd"></div>Rise Up</label>
+    <label class="chip"><input type="checkbox" value="zoom" checked><div class="cd"></div>Power Zoom</label>
+    <label class="chip"><input type="checkbox" value="glitch" checked><div class="cd"></div>Glitch</label>
+    <label class="chip"><input type="checkbox" value="swing" checked><div class="cd"></div>Swing</label>
+    <label class="chip"><input type="checkbox" value="blur" checked><div class="cd"></div>Blur In</label>
+    <label class="chip"><input type="checkbox" value="typewriter"><div class="cd"></div>Typewriter</label>
+    <label class="chip"><input type="checkbox" value="wave" checked><div class="cd"></div>Wave Move</label>
+    <label class="chip"><input type="checkbox" value="flash" checked><div class="cd"></div>Flash In</label>
+    <label class="chip"><input type="checkbox" value="rubber"><div class="cd"></div>Rubber Band</label>
+    <label class="chip"><input type="checkbox" value="spin"><div class="cd"></div>Spin Drop</label>
+  </div>
+</div></div>
+
+</div></div></div>
+<div class="actbar">
+  <div class="st" id="ae-st">가사를 입력하고 생성 버튼을 누르세요.</div>
+  <button class="btn bdl" id="ae-dl" onclick="aeSv()">💾 .JSX 파일 저장</button>
+  <button class="btn bae" onclick="aeBuild()">⚡ AE JSX 스크립트 생성</button>
+</div>
 </div>
 
+<!-- ══ DV PAGE ══ -->
+<div class="page" id="dv">
+<div class="main">
+<div class="left">
+  <div class="slabel">자막 / 가사 입력</div>
+  <textarea id="dv-tx" placeholder="한 줄 = 타임라인 마커 1개&#10;&#10;Hello World&#10;안녕하세요&#10;Kinetic Typography"></textarea>
+  <div class="ib dv">💡 <b>DaVinci 사용법</b><br>
+    1. Edit 페이지 타임라인 열기<br>
+    2. 음악 클립에 마커 추가 (M키)<br>
+    3. V2 트랙에 Fusion Title 추가<br>
+    4. Workspace → Scripts 실행<br>
+    <span style="color:var(--dv)">[ ]줄은 무시됩니다</span>
+  </div>
+</div>
+<div class="right"><div class="g2">
+
+<!-- 모드 -->
+<div class="card full"><div class="ch"><div class="dot" style="background:var(--dv)"></div><div class="ct">표시 모드</div></div><div class="cb">
+  <div class="m2">
+    <button class="mb of" id="dv-mf" onclick="dvM('full')">🖥 키네틱 타이포<br><span style="font-size:9px;font-weight:400;opacity:.7">Fusion 텍스트 효과</span></button>
+    <button class="mb" id="dv-ms" onclick="dvM('sub')">📺 자막<br><span style="font-size:9px;font-weight:400;opacity:.7">하단 고정 자막</span></button>
+  </div>
+  <div class="subx" id="dv-sx">
+    <div class="field"><div class="fl">자막 위치</div>
+      <div class="pg">
+        <button class="pb" onclick="dvP('top_L',this)">↖ 좌상단</button><button class="pb" onclick="dvP('top_C',this)">↑ 상단</button><button class="pb" onclick="dvP('top_R',this)">↗ 우상단</button>
+        <button class="pb" onclick="dvP('mid_L',this)">← 좌중간</button><button class="pb" onclick="dvP('mid_C',this)">· 중앙</button><button class="pb" onclick="dvP('mid_R',this)">→ 우중간</button>
+        <button class="pb" onclick="dvP('bot_L',this)">↙ 좌하단</button><button class="pb on" onclick="dvP('bot_C',this)">↓ 하단</button><button class="pb" onclick="dvP('bot_R',this)">↘ 우하단</button>
+      </div>
+    </div>
+  </div>
+</div></div>
+
+<!-- 배치 + 클립길이 -->
+<div class="card"><div class="ch"><div class="dot" style="background:var(--dv)"></div><div class="ct">배치</div></div><div class="cb">
+  <div class="field"><select id="dv-sync"><option value="marker">타임라인 마커 기준 ⭐</option><option value="linear">균등분할</option></select></div>
+  <div class="field"><div class="fl">기본 클립 길이 (초)</div>
+    <div class="rrow"><input type="range" id="dv-dur" min="1" max="10" value="3" step="0.5" oninput="document.getElementById('dv-durv').textContent=this.value+'s'"><span class="rv" id="dv-durv">3s</span></div>
+  </div>
+</div></div>
+
+<!-- 크기 -->
+<div class="card"><div class="ch"><div class="dot" style="background:var(--dv)"></div><div class="ct">글자 크기</div></div><div class="cb">
+  <div class="field"><div class="fl">폰트 크기 (pt)</div>
+    <div class="rrow"><input type="range" id="dv-fs" min="20" max="300" value="100" oninput="dvSy(this.value)"><span class="rv" id="dv-fsv">100</span></div>
+    <input type="number" id="dv-fsn" value="100" min="1" max="999" oninput="dvSyN(this.value)">
+  </div>
+  <div class="field" id="dv-asf"><div class="fl">자동 스케일 <span style="color:var(--dv);font-size:8px">(키네틱)</span></div>
+    <select id="dv-as"><option value="fit">화면에 맞게 자동</option><option value="fixed">고정</option></select>
+  </div>
+  <div id="dv-sn" style="display:none;font-size:9px;color:var(--gd);background:rgba(255,208,0,.06);border:1px solid rgba(255,208,0,.2);border-radius:5px;padding:6px 8px;line-height:1.6">📌 자막: 글자 크기 고정</div>
+</div></div>
+
+<!-- 폰트 + 색상 -->
+<div class="card full"><div class="ch"><div class="dot" style="background:var(--dv)"></div><div class="ct">폰트 & 색상</div></div><div class="cb">
+  <div class="g2" style="gap:8px">
+    <div class="field"><div class="fl">폰트 이름</div><input type="text" id="dv-fn" value="Arial" placeholder="시스템 폰트명"></div>
+    <div class="field"><div class="fl">Bold</div><select id="dv-bd"><option value="true">Bold 적용</option><option value="false">일반</option></select></div>
+  </div>
+  <div class="g2" style="gap:8px">
+    <div class="field"><div class="fl">글자 색상</div><input type="color" id="dv-fc" value="#ffffff"></div>
+    <div class="field"><div class="fl">배경 색상</div><input type="color" id="dv-bg" value="#000000"></div>
+  </div>
+  <div class="field"><div class="fl">배경 투명도</div>
+    <div class="rrow"><input type="range" id="dv-ba" min="0" max="100" value="60" oninput="document.getElementById('dv-bav').textContent=this.value+'%'"><span class="rv" id="dv-bav">60%</span></div>
+  </div>
+</div></div>
+
+<!-- Fade -->
+<div class="card"><div class="ch"><div class="dot" style="background:var(--gd)"></div><div class="ct">Fade In 방향</div></div><div class="cb">
+  <div class="field"><select id="dv-fm"><option value="random">랜덤 믹스</option><option value="fixed">고정 (첫번째)</option></select></div>
+  <div class="sr"><button class="sb" onclick="sa('#dv-fp',1)">전체선택</button><button class="sb" onclick="sa('#dv-fp',0)">전체해제</button></div>
+  <div class="chips fa" id="dv-fp">
+    <label class="chip"><input type="checkbox" value="fade_h" checked><div class="cd"></div>→ 가로</label>
+    <label class="chip"><input type="checkbox" value="fade_v" checked><div class="cd"></div>↓ 세로</label>
+    <label class="chip"><input type="checkbox" value="fade_diag" checked><div class="cd"></div>↘ 대각선</label>
+    <label class="chip"><input type="checkbox" value="fade_zoom_in" checked><div class="cd"></div>⊕ 줌인</label>
+    <label class="chip"><input type="checkbox" value="fade_zoom_out"><div class="cd"></div>⊖ 줌아웃</label>
+    <label class="chip"><input type="checkbox" value="fade_none"><div class="cd"></div>— 없음</label>
+  </div>
+</div></div>
+
+<!-- 모션 -->
+<div class="card"><div class="ch"><div class="dot" style="background:var(--dv)"></div><div class="ct">모션 효과</div></div><div class="cb">
+  <div style="font-size:9px;color:var(--dm)">Fusion 키프레임 기반 효과</div>
+  <div class="sr"><button class="sb" onclick="sa('#dv-fx',1)">전체선택</button><button class="sb" onclick="sa('#dv-fx',0)">전체해제</button></div>
+  <div class="chips dv" id="dv-fx">
+    <label class="chip"><input type="checkbox" value="bounce" checked><div class="cd"></div>Bounce In</label>
+    <label class="chip"><input type="checkbox" value="slide_l" checked><div class="cd"></div>Slide L</label>
+    <label class="chip"><input type="checkbox" value="slide_r" checked><div class="cd"></div>Slide R</label>
+    <label class="chip"><input type="checkbox" value="drop" checked><div class="cd"></div>Drop Down</label>
+    <label class="chip"><input type="checkbox" value="rise" checked><div class="cd"></div>Rise Up</label>
+    <label class="chip"><input type="checkbox" value="scale_pop" checked><div class="cd"></div>Scale Pop</label>
+    <label class="chip"><input type="checkbox" value="spin_in"><div class="cd"></div>Spin In</label>
+    <label class="chip"><input type="checkbox" value="shake"><div class="cd"></div>Shake</label>
+  </div>
+</div></div>
+
+<!-- 자막 전용 -->
+<div class="card full" id="dv-sc" style="display:none"><div class="ch"><div class="dot" style="background:var(--gd)"></div><div class="ct">자막 전용 옵션</div></div><div class="cb">
+  <div class="g2" style="gap:8px">
+    <div class="field"><div class="fl">유지 방식</div><select id="dv-sk"><option value="next_marker">다음 마커까지</option><option value="fixed_dur">고정 시간</option></select></div>
+    <div class="field"><div class="fl">고정 시간 (초)</div><input type="number" id="dv-sd" value="2" min="0.5" max="30" step="0.5"></div>
+  </div>
+</div></div>
+
+</div></div></div>
 <div class="actbar">
-  <div class="status" id="statusMsg">가사를 입력하고 생성 버튼을 누르세요.</div>
-  <button class="btn btn-dl" id="downloadBtn" onclick="saveFile()">💾 .JSX 파일 저장</button>
-  <button class="btn btn-gen" onclick="doBuild()">⚡ JSX 스크립트 생성</button>
+  <div class="st" id="dv-st">자막을 입력하고 생성 버튼을 누르세요.</div>
+  <button class="btn bdl" id="dv-dl" onclick="dvSv()">💾 .lua 파일 저장</button>
+  <button class="btn bdv" onclick="dvBuild()">🎥 DaVinci Lua 스크립트 생성</button>
+</div>
 </div>
 
 <script>
-let codeBuffer = "";
-let curMode = "full";
-let curSubPos = "bot_C";
+/* ── shared ── */
+function sw(t){['ae','dv'].forEach(p=>{document.getElementById(p).classList.toggle('active',p===t);});document.getElementById('tae').className='tab'+(t==='ae'?' ae-on':'');document.getElementById('tdv').className='tab'+(t==='dv'?' dv-on':'');}
+function sa(sel,v){document.querySelectorAll(sel+' input').forEach(e=>e.checked=v);}
+function h2ae(h){return'['+[1,3,5].map(i=>(parseInt(h.slice(i,i+2),16)/255).toFixed(3)).join(',')+']';}
+function h2lua(h){const a=[1,3,5].map(i=>(parseInt(h.slice(i,i+2),16)/255).toFixed(3));return'{'+a[0]+','+a[1]+','+a[2]+',1.0}';}
 
-function setMode(m) {
-  curMode = m;
-  document.getElementById('mFullBtn').className = 'mbtn' + (m==='full' ? ' on-full' : '');
-  document.getElementById('mSubBtn').className  = 'mbtn' + (m==='subtitle' ? ' on-sub' : '');
-  document.getElementById('subExtras').className = 'subonly' + (m==='subtitle' ? ' show' : '');
-}
-function setSub(pos, el) {
-  curSubPos = pos;
-  document.querySelectorAll('.pbtn').forEach(b => b.classList.remove('on'));
-  el.classList.add('on');
-}
-function applyPreset() {
-  const v = document.getElementById('fontPreset').value;
-  if (v) document.getElementById('fontName').value = v;
-}
-function syncFS(v)  { document.getElementById('fsv').textContent=v; document.getElementById('fsNum').value=v; }
-function syncFSN(v) { const c=Math.max(1,Math.min(9999,parseInt(v)||120)); document.getElementById('fontSize').value=Math.min(c,300); document.getElementById('fsv').textContent=c; }
-function selFX(v)   { document.querySelectorAll('#effectPool input').forEach(e=>e.checked=v); }
-function selFade(v) { document.querySelectorAll('#fadePool input').forEach(e=>e.checked=v); }
-function hex2rgb(h) { return '['+[1,3,5].map(i=>(parseInt(h.slice(i,i+2),16)/255).toFixed(3)).join(',')+']'; }
+/* ── AE state ── */
+let aeBuf='',aeMode='full',aeSub='bot_C';
+function aeM(m){aeMode=m;document.getElementById('ae-mf').className='mb'+(m==='full'?' of':'');document.getElementById('ae-ms').className='mb'+(m==='sub'?' os':'');document.getElementById('ae-sx').className='subx'+(m==='sub'?' show':'');document.getElementById('ae-asf').style.display=m==='full'?'flex':'none';document.getElementById('ae-sn').style.display=m==='sub'?'block':'none';}
+function aeP(p,el){aeSub=p;document.querySelectorAll('#ae .pb').forEach(b=>b.classList.remove('on'));el.classList.add('on');}
+function aePreset(){const v=document.getElementById('ae-fp').value;if(v)document.getElementById('ae-fn').value=v;}
+function aeSy(v){document.getElementById('ae-fsv').textContent=v;document.getElementById('ae-fsn').value=v;}
+function aeSyN(v){const c=Math.max(1,Math.min(9999,parseInt(v)||120));document.getElementById('ae-fs').value=Math.min(c,300);document.getElementById('ae-fsv').textContent=c;}
+function aeStatus(m,c){const e=document.getElementById('ae-st');e.textContent=m;e.className='st'+(c?' '+c:'');}
 
-function doBuild() {
-  const raw = document.getElementById('lyricsArea').value
-    .split('\n').filter(s=>s.trim()&&!s.trim().startsWith('['));
-  if (!raw.length) { setStatus('⚠ 텍스트를 입력하세요.','err'); return; }
+function aeBuild(){
+  const raw=document.getElementById('ae-tx').value.split('\n').filter(s=>s.trim()&&!s.trim().startsWith('['));
+  if(!raw.length){aeStatus('⚠ 텍스트를 입력하세요.','err');return;}
+  const fx=[...document.querySelectorAll('#ae-fx input:checked')].map(e=>e.value);
+  const fp=[...document.querySelectorAll('#ae-fp2 input:checked')].map(e=>e.value);
+  if(!fx.length){aeStatus('⚠ 모션 효과를 선택하세요.','err');return;}
+  if(!fp.length){aeStatus('⚠ Fade 방향을 선택하세요.','err');return;}
+  const font=document.getElementById('ae-fn').value||'Arial-Black';
+  const color=h2ae(document.getElementById('ae-fc').value);
+  const scol=h2ae(document.getElementById('ae-sc').value);
+  const sw=parseInt(document.getElementById('ae-sw').value);
+  const fs=parseInt(document.getElementById('ae-fsn').value)||120;
+  const as=document.getElementById('ae-as').value;
+  const sync=document.getElementById('ae-sync').value;
+  const sh=parseInt(document.getElementById('ae-sh').value)/100;
+  const fm=document.getElementById('ae-fm').value;
+  const isSub=aeMode==='sub';
+  const pm={top_L:[0.1,sh/2],top_C:[0.5,sh/2],top_R:[0.9,sh/2],mid_L:[0.1,0.5],mid_C:[0.5,0.5],mid_R:[0.9,0.5],bot_L:[0.1,1-sh/2],bot_C:[0.5,1-sh/2],bot_R:[0.9,1-sh/2]};
+  const[spx,spy]=pm[aeSub]||pm['bot_C'];
+  const lines=raw.map(l=>l.trim().split(/\s+/).map(w=>{let c='';for(let i=0;i<w.length;i+=8)c+=w.slice(i,i+8)+(i+8<w.length?'\r':'');return c;}).join('\r'));
+  const sc2=sw>0?`        doc.strokeColor=${scol};\n        doc.strokeWidth=${sw};\n        doc.strokeOverFill=true;`:'        //획없음';
 
-  const effects  = [...document.querySelectorAll('#effectPool input:checked')].map(e=>e.value);
-  const fadePl   = [...document.querySelectorAll('#fadePool input:checked')].map(e=>e.value);
-  if (!effects.length) { setStatus('⚠ 모션 효과를 선택하세요.','err'); return; }
-  if (!fadePl.length)  { setStatus('⚠ Fade 방향을 선택하세요.','err'); return; }
-
-  const font      = document.getElementById('fontName').value || 'Arial-Black';
-  const color     = hex2rgb(document.getElementById('fontColor').value);
-  const strokeCol = hex2rgb(document.getElementById('strokeColor').value);
-  const strokeW   = parseInt(document.getElementById('strokeW').value);
-  const fontSize  = parseInt(document.getElementById('fsNum').value) || 120;
-  const autoScale = document.getElementById('autoScale').value;
-  const syncMode  = document.getElementById('syncMode').value;
-  const subH      = parseInt(document.getElementById('subH').value) / 100;
-  const fadeMode  = document.getElementById('fadeMode').value;
-  const isSub     = curMode === 'subtitle';
-
-  const subPosMap = {
-    top_L:[0.1,subH/2],   top_C:[0.5,subH/2],   top_R:[0.9,subH/2],
-    mid_L:[0.1,0.5],      mid_C:[0.5,0.5],       mid_R:[0.9,0.5],
-    bot_L:[0.1,1-subH/2], bot_C:[0.5,1-subH/2],  bot_R:[0.9,1-subH/2]
-  };
-  const [spx,spy] = subPosMap[curSubPos]||subPosMap['bot_C'];
-
-  const lines = raw.map(line=>
-    line.trim().split(/\s+/).map(word=>{
-      let c='';
-      for(let i=0;i<word.length;i+=8) c+=word.slice(i,i+8)+(i+8<word.length?'\r':'');
-      return c;
-    }).join('\r')
-  );
-
-  const strokeCode = strokeW>0
-    ? `        doc.strokeColor = ${strokeCol};\n        doc.strokeWidth = ${strokeW};\n        doc.strokeOverFill = true;`
-    : `        // 획 없음`;
-
-  codeBuffer = `/* ==============================================
-   AE Kinetic Typo Script v6.1
-   Mode : ${isSub?'Subtitle ('+curSubPos+')':'Fullscreen'}
-   Date : ${new Date().toLocaleString('ko-KR')}
-   Lines: ${lines.length}
-   ============================================== */
-(function() {
-    app.beginUndoGroup("KineticTypo_v6.1");
-
-    var comp = app.project.activeItem;
-    if (!comp || !(comp instanceof CompItem)) {
-        alert("활성 컴포지션을 선택하세요.");
-        app.endUndoGroup();
-        return;
-    }
-    var cW = comp.width;
-    var cH = comp.height;
-
-    /* 선택 레이어 (마커용) */
-    var markerLayer = (comp.selectedLayers.length > 0) ? comp.selectedLayers[0] : null;
-    var useMarker   = ${syncMode==='marker'};
-    var isSub       = ${isSub};
-    var subH        = ${subH};
-    var spx         = ${spx};
-    var spy         = ${spy};
-    var effectsPool = ${JSON.stringify(effects)};
-    var fadePool    = ${JSON.stringify(fadePl)};
-    var fadeMode    = "${fadeMode}";
-    var lines       = ${JSON.stringify(lines)};
-
-    /* 마커 경고 */
-    if (useMarker) {
-        if (!markerLayer) {
-            alert("마커 모드: 음악 레이어를 선택하세요.\\n균등 분할로 전환합니다.");
-            useMarker = false;
-        } else if (markerLayer.marker.numKeys < lines.length) {
-            alert("경고: 마커(" + markerLayer.marker.numKeys + "개) < 줄(" + lines.length + "개)\\n부족한 줄은 균등 분할로 배치합니다.");
-        }
-    }
-
-    /* 자막 배경 솔리드 (자막 모드 전용) */
-    if (isSub) {
-        try {
-            var bgH   = Math.round(cH * subH);
-            var bgLyr = comp.layers.addSolid([0,0,0], "자막_배경", cW, bgH, 1);
-            bgLyr.position.setValue([cW/2, cH * spy]);
-            bgLyr.property("ADBE Transform Group").property("ADBE Opacity").setValue(65);
-            bgLyr.moveToEnd();
-        } catch(e) { /* 배경 생성 실패 무시 */ }
-    }
-
-    /* 텍스트 레이어 루프 */
-    for (var i = 0; i < lines.length; i++) {
-        var layer = comp.layers.addText(lines[i]);
-        layer.name = "Line_" + (i + 1);
-
-        /* 텍스트 속성 */
-        var srcProp = layer.property("ADBE Text Properties").property("ADBE Text Document");
-        var doc = srcProp.value;
-        doc.fontSize   = ${fontSize};
-        doc.font       = "${font}";
-        doc.fillColor  = ${color};
-${strokeCode}
-        doc.justification = ParagraphJustification.CENTER_JUSTIFY;
-        doc.leading    = ${Math.round(fontSize*0.8)};
-        srcProp.setValue(doc);
-
-        /* 타임라인 */
-        var st, et;
-        if (useMarker && markerLayer && i < markerLayer.marker.numKeys) {
-            st = markerLayer.marker.keyTime(i + 1);
-            et = (i + 1 < markerLayer.marker.numKeys)
-               ? markerLayer.marker.keyTime(i + 2)
-               : st + 2.0;
-        } else {
-            st = i * 2.0;
-            et = st + 1.8;
-        }
-        layer.startTime = st;
-        layer.outPoint  = et;
-
-        /* 앵커포인트 + 위치 + 스케일 */
-        var rect = layer.sourceRectAtTime(st + 0.01, false);
-        layer.anchorPoint.setValue([rect.left + rect.width/2, rect.top + rect.height/2]);
-
+  aeBuf=`/* AE Kinetic Typo v6.1 | Mode:${isSub?'Subtitle('+aeSub+')':'Fullscreen'} | ${new Date().toLocaleString('ko-KR')} */
+(function(){
+    app.beginUndoGroup("KineticTypo");
+    var comp=app.project.activeItem;
+    if(!comp||!(comp instanceof CompItem)){alert("컴포지션을 선택하세요.");app.endUndoGroup();return;}
+    var cW=comp.width,cH=comp.height;
+    var mL=(comp.selectedLayers.length>0)?comp.selectedLayers[0]:null;
+    var useM=${sync==='marker'},isSub=${isSub},sh=${sh},spx=${spx},spy=${spy};
+    var fxPool=${JSON.stringify(fx)},fpPool=${JSON.stringify(fp)},fm="${fm}";
+    var lines=${JSON.stringify(lines)};
+    if(useM){if(!mL){alert("마커 모드: 음악 레이어를 선택하세요.\\n균등분할로 진행.");useM=false;}else if(mL.marker.numKeys<lines.length){alert("경고: 마커("+mL.marker.numKeys+") < 줄("+lines.length+")");}}
+    if(isSub){try{var bL=comp.layers.addSolid([0,0,0],"자막배경",cW,Math.round(cH*sh),1);bL.position.setValue([cW/2,cH*spy]);bL.property("ADBE Transform Group").property("ADBE Opacity").setValue(65);bL.moveToEnd();}catch(e){}}
+    for(var i=0;i<lines.length;i++){
+        var l=comp.layers.addText(lines[i]);l.name="L"+(i+1);
+        var sp=l.property("ADBE Text Properties").property("ADBE Text Document");
+        var doc=sp.value;
+        doc.fontSize=${fs};doc.font="${font}";doc.fillColor=${color};
+${sc2}
+        doc.justification=ParagraphJustification.CENTER_JUSTIFY;doc.leading=${Math.round(fs*0.8)};sp.setValue(doc);
+        var st,et;
+        if(useM&&mL&&i<mL.marker.numKeys){st=mL.marker.keyTime(i+1);et=(i+1<mL.marker.numKeys)?mL.marker.keyTime(i+2):st+2;}else{st=i*2;et=st+1.8;}
+        l.startTime=st;l.outPoint=et;
+        var r=l.sourceRectAtTime(st+0.01,false);l.anchorPoint.setValue([r.left+r.width/2,r.top+r.height/2]);
         var fsc;
-        if (isSub) {
-            var availW = cW * 0.88;
-            var availH = cH * subH * 0.82;
-            fsc = Math.min((availW / rect.width)*100, (availH / rect.height)*100);
-            if (fsc > 250) fsc = 250;
-            layer.scale.setValue([fsc, fsc]);
-            layer.position.setValue([cW * spx, cH * spy]);
-        } else {
-            if ("${autoScale}" === "fit") {
-                fsc = Math.min((cW*0.92 / rect.width)*100, (cH*0.88 / rect.height)*100);
-                if (fsc > 500) fsc = 500;
-            } else {
-                fsc = 100;
-            }
-            layer.scale.setValue([fsc, fsc]);
-            layer.position.setValue([cW/2, cH/2]);
-        }
-
-        /* Fade 방향 선택 */
-        var thisFade = (fadeMode === "random")
-            ? fadePool[Math.floor(Math.random() * fadePool.length)]
-            : fadePool[0];
-
-        /* 모션 효과 랜덤 1~3개 */
-        var numPick = Math.floor(Math.random()*3) + 1;
-        var picks=[], tmp=effectsPool.slice();
-        for (var k=0; k<numPick; k++) {
-            if (!tmp.length) break;
-            var ri=Math.floor(Math.random()*tmp.length);
-            picks.push(tmp[ri]); tmp.splice(ri,1);
-        }
-
-        applyFX(layer, picks, thisFade, st, et);
+        if(isSub){fsc=100;l.scale.setValue([fsc,fsc]);l.position.setValue([cW*spx,cH*spy]);}
+        else{fsc=("${as}"==="fit")?Math.min((cW*0.92/r.width)*100,(cH*0.88/r.height)*100):100;if(fsc>500)fsc=500;l.scale.setValue([fsc,fsc]);l.position.setValue([cW/2,cH/2]);}
+        var tf=(fm==="random")?fpPool[Math.floor(Math.random()*fpPool.length)]:fpPool[0];
+        var np=Math.floor(Math.random()*3)+1,pk=[],tmp=fxPool.slice();
+        for(var k=0;k<np;k++){if(!tmp.length)break;var ri=Math.floor(Math.random()*tmp.length);pk.push(tmp[ri]);tmp.splice(ri,1);}
+        applyFX(l,pk,tf,st,et,isSub);
     }
-
-    /* ===============================================
-       효과 적용 함수
-    =============================================== */
-    function applyFX(l, picks, fade, st, et) {
-        var opacity = l.property("ADBE Transform Group").property("ADBE Opacity");
-        var pos     = l.position;
-        var sc      = l.scale;
-        var rot     = l.rotation;
-        var posV    = pos.value;
-        var scV     = sc.value;
-
-        /* Fade In 투명도 */
-        opacity.setValueAtTime(st,        0);
-        opacity.setValueAtTime(st + 0.18, 100);
-
-        /* Fade In 방향 */
-        if (fade === "fade_h") {
-            pos.setValueAtTime(st,        [posV[0]-cW*0.1, posV[1]]);
-            pos.setValueAtTime(st+0.22,   posV);
-        } else if (fade === "fade_v") {
-            pos.setValueAtTime(st,        [posV[0], posV[1]+cH*0.07]);
-            pos.setValueAtTime(st+0.22,   posV);
-        } else if (fade === "fade_diag_tl") {
-            pos.setValueAtTime(st,        [posV[0]-cW*0.08, posV[1]-cH*0.05]);
-            pos.setValueAtTime(st+0.22,   posV);
-        } else if (fade === "fade_diag_tr") {
-            pos.setValueAtTime(st,        [posV[0]+cW*0.08, posV[1]-cH*0.05]);
-            pos.setValueAtTime(st+0.22,   posV);
-        } else if (fade === "fade_zoom_in") {
-            sc.setValueAtTime(st,         [scV[0]*0.4, scV[1]*0.4]);
-            sc.setValueAtTime(st+0.22,    scV);
-        } else if (fade === "fade_zoom_out") {
-            sc.setValueAtTime(st,         [scV[0]*1.7, scV[1]*1.7]);
-            sc.setValueAtTime(st+0.22,    scV);
-        }
-
-        /* 이징 */
-        try {
-            var e50=[new KeyframeEase(0,50)];
-            for(var k=1;k<=pos.numKeys;k++) pos.setTemporalEaseAtKey(k,e50,e50);
-            for(var k=1;k<=sc.numKeys; k++) sc.setTemporalEaseAtKey(k,e50,e50);
-        } catch(ez){}
-
-        /* 모션 효과 */
-        for (var m=0; m<picks.length; m++) {
-            try {
-                var t  = picks[m];
-                var p  = pos.value;
-                var s  = sc.value;
-
-                if (t==="side_L") {
-                    pos.setValueAtTime(st,       [p[0]-cW*0.35,p[1]]);
-                    pos.setValueAtTime(st+0.10,  [p[0]+25,p[1]]);
-                    pos.setValueAtTime(st+0.22,  p);
-                }
-                if (t==="side_R") {
-                    pos.setValueAtTime(st,       [p[0]+cW*0.35,p[1]]);
-                    pos.setValueAtTime(st+0.10,  [p[0]-25,p[1]]);
-                    pos.setValueAtTime(st+0.22,  p);
-                }
-                if (t==="top") {
-                    pos.setValueAtTime(st,       [p[0],p[1]-cH*0.4]);
-                    pos.setValueAtTime(st+0.12,  [p[0],p[1]+18]);
-                    pos.setValueAtTime(st+0.24,  p);
-                }
-                if (t==="bottom") {
-                    pos.setValueAtTime(st,       [p[0],p[1]+cH*0.4]);
-                    pos.setValueAtTime(st+0.12,  [p[0],p[1]-18]);
-                    pos.setValueAtTime(st+0.24,  p);
-                }
-                if (t==="pop") {
-                    sc.setValueAtTime(st,        [s[0]*0.05,s[1]*0.05]);
-                    sc.setValueAtTime(st+0.12,   [s[0]*1.22,s[1]*1.22]);
-                    sc.setValueAtTime(st+0.22,   s);
-                }
-                if (t==="zoom") {
-                    sc.setValueAtTime(st,        [s[0]*3.5,s[1]*3.5]);
-                    sc.setValueAtTime(st+0.18,   s);
-                }
-                if (t==="glitch") {
-                    pos.setValueAtTime(st,       [p[0]+18, p[1]-12]);
-                    pos.setValueAtTime(st+0.04,  [p[0]-16, p[1]+10]);
-                    pos.setValueAtTime(st+0.08,  [p[0]+12, p[1]-8]);
-                    pos.setValueAtTime(st+0.12,  [p[0]-9,  p[1]+6]);
-                    pos.setValueAtTime(st+0.16,  p);
-                    opacity.setValueAtTime(st,       15);
-                    opacity.setValueAtTime(st+0.04,  90);
-                    opacity.setValueAtTime(st+0.08,  35);
-                    opacity.setValueAtTime(st+0.12,  100);
-                }
-                if (t==="swing") {
-                    var ap=l.anchorPoint.value;
-                    l.anchorPoint.setValue([ap[0],ap[1]-70]);
-                    rot.setValueAtTime(st,       -38);
-                    rot.setValueAtTime(st+0.15,   22);
-                    rot.setValueAtTime(st+0.28,  -11);
-                    rot.setValueAtTime(st+0.40,    5);
-                    rot.setValueAtTime(st+0.52,    0);
-                }
-                if (t==="blur") {
-                    var blurFX=l.property("ADBE Effect Parade").addProperty("ADBE Gaussian Blur 2");
-                    if (blurFX) {
-                        blurFX.property("ADBE Gaussians Blurriness").setValueAtTime(st,     80);
-                        blurFX.property("ADBE Gaussians Blurriness").setValueAtTime(st+0.3,  0);
-                    }
-                }
-                if (t==="typewriter") {
-                    var anims=l.property("ADBE Text Properties").property("ADBE Text Animators");
-                    var anim=anims.addProperty("ADBE Text Animator");
-                    var rsel=anim.property("ADBE Text Selectors").addProperty("ADBE Text Range Selector");
-                    var aprop=anim.property("ADBE Text Animator Properties").addProperty("ADBE Text Opacity");
-                    aprop.setValue(0);
-                    var tlen=lines[i]?lines[i].length:10;
-                    rsel.property("ADBE Text Index End").setValueAtTime(st, 0);
-                    rsel.property("ADBE Text Index End").setValueAtTime(st+Math.min(tlen*0.07,0.9), tlen+5);
-                }
-                if (t==="wave") {
-                    var dur=et-st;
-                    for(var wi=0;wi<=8;wi++) {
-                        pos.setValueAtTime(st+dur*wi/8, [p[0], p[1]+Math.sin(wi*Math.PI/2)*28]);
-                    }
-                }
-                if (t==="flash") {
-                    opacity.setValueAtTime(st,       0);
-                    opacity.setValueAtTime(st+0.04,  100);
-                    opacity.setValueAtTime(st+0.09,  18);
-                    opacity.setValueAtTime(st+0.14,  100);
-                    opacity.setValueAtTime(st+0.19,  55);
-                    opacity.setValueAtTime(st+0.24,  100);
-                }
-                if (t==="rubber") {
-                    sc.setValueAtTime(st,        [s[0]*1.55,s[1]*0.45]);
-                    sc.setValueAtTime(st+0.10,   [s[0]*0.78,s[1]*1.35]);
-                    sc.setValueAtTime(st+0.19,   [s[0]*1.10,s[1]*0.92]);
-                    sc.setValueAtTime(st+0.27,   s);
-                }
-                if (t==="spin") {
-                    rot.setValueAtTime(st,        -180);
-                    rot.setValueAtTime(st+0.18,     8);
-                    rot.setValueAtTime(st+0.28,     0);
-                    sc.setValueAtTime(st,          [s[0]*0.05,s[1]*0.05]);
-                    sc.setValueAtTime(st+0.18,     s);
-                }
-            } catch(fxErr) { /* 개별 효과 실패 시 건너뜀 */ }
-        }
-
-        /* Fade Out */
-        var foT=et-0.12;
-        if (foT>st+0.35) {
-            opacity.setValueAtTime(foT, 100);
-            opacity.setValueAtTime(et,  0);
-        }
+    function applyFX(l,picks,fade,st,et,isSL){
+        var op=l.property("ADBE Transform Group").property("ADBE Opacity");
+        var pos=l.position,sc=l.scale,rot=l.rotation,pV=pos.value,sV=sc.value;
+        op.setValueAtTime(st,0);op.setValueAtTime(st+0.18,100);
+        if(fade==="fade_h"){pos.setValueAtTime(st,[pV[0]-cW*0.1,pV[1]]);pos.setValueAtTime(st+0.22,pV);}
+        else if(fade==="fade_v"){pos.setValueAtTime(st,[pV[0],pV[1]+cH*0.07]);pos.setValueAtTime(st+0.22,pV);}
+        else if(fade==="fade_diag_tl"){pos.setValueAtTime(st,[pV[0]-cW*0.08,pV[1]-cH*0.05]);pos.setValueAtTime(st+0.22,pV);}
+        else if(fade==="fade_diag_tr"){pos.setValueAtTime(st,[pV[0]+cW*0.08,pV[1]-cH*0.05]);pos.setValueAtTime(st+0.22,pV);}
+        else if(fade==="fade_zoom_in"){sc.setValueAtTime(st,[sV[0]*0.4,sV[1]*0.4]);sc.setValueAtTime(st+0.22,sV);}
+        else if(fade==="fade_zoom_out"){sc.setValueAtTime(st,[sV[0]*1.7,sV[1]*1.7]);sc.setValueAtTime(st+0.22,sV);}
+        try{var e5=[new KeyframeEase(0,50)];for(var k=1;k<=pos.numKeys;k++)pos.setTemporalEaseAtKey(k,e5,e5);for(var k=1;k<=sc.numKeys;k++)sc.setTemporalEaseAtKey(k,e5,e5);}catch(e){}
+        for(var m=0;m<picks.length;m++){try{
+            var t=picks[m],p=pos.value,s=sc.value;
+            if(t==="side_L"){pos.setValueAtTime(st,[p[0]-cW*0.35,p[1]]);pos.setValueAtTime(st+0.1,[p[0]+25,p[1]]);pos.setValueAtTime(st+0.22,p);}
+            if(t==="side_R"){pos.setValueAtTime(st,[p[0]+cW*0.35,p[1]]);pos.setValueAtTime(st+0.1,[p[0]-25,p[1]]);pos.setValueAtTime(st+0.22,p);}
+            if(t==="top"){pos.setValueAtTime(st,[p[0],p[1]-cH*0.4]);pos.setValueAtTime(st+0.12,[p[0],p[1]+18]);pos.setValueAtTime(st+0.22,p);}
+            if(t==="bottom"){pos.setValueAtTime(st,[p[0],p[1]+cH*0.4]);pos.setValueAtTime(st+0.12,[p[0],p[1]-18]);pos.setValueAtTime(st+0.22,p);}
+            if(t==="pop"){sc.setValueAtTime(st,[s[0]*0.05,s[1]*0.05]);sc.setValueAtTime(st+0.12,[s[0]*1.22,s[1]*1.22]);sc.setValueAtTime(st+0.22,s);}
+            if(t==="zoom"){sc.setValueAtTime(st,[s[0]*3.5,s[1]*3.5]);sc.setValueAtTime(st+0.18,s);}
+            if(t==="glitch"){pos.setValueAtTime(st,[p[0]+18,p[1]-12]);pos.setValueAtTime(st+0.04,[p[0]-16,p[1]+10]);pos.setValueAtTime(st+0.08,[p[0]+12,p[1]-8]);pos.setValueAtTime(st+0.12,[p[0]-9,p[1]+6]);pos.setValueAtTime(st+0.16,p);if(!isSL){op.setValueAtTime(st,15);op.setValueAtTime(st+0.04,90);op.setValueAtTime(st+0.08,35);op.setValueAtTime(st+0.12,100);}}
+            if(t==="swing"){var ap=l.anchorPoint.value;l.anchorPoint.setValue([ap[0],ap[1]-70]);rot.setValueAtTime(st,-38);rot.setValueAtTime(st+0.15,22);rot.setValueAtTime(st+0.28,-11);rot.setValueAtTime(st+0.4,5);rot.setValueAtTime(st+0.52,0);}
+            if(t==="blur"){var bfx=l.property("ADBE Effect Parade").addProperty("ADBE Gaussian Blur 2");if(bfx){bfx.property("ADBE Gaussians Blurriness").setValueAtTime(st,80);bfx.property("ADBE Gaussians Blurriness").setValueAtTime(st+0.3,0);}}
+            if(t==="typewriter"){var an=l.property("ADBE Text Properties").property("ADBE Text Animators").addProperty("ADBE Text Animator");var rs=an.property("ADBE Text Selectors").addProperty("ADBE Text Range Selector");an.property("ADBE Text Animator Properties").addProperty("ADBE Text Opacity").setValue(0);var tl=lines[i]?lines[i].length:10;rs.property("ADBE Text Index End").setValueAtTime(st,0);rs.property("ADBE Text Index End").setValueAtTime(st+Math.min(tl*0.07,0.9),tl+5);}
+            if(t==="wave"){var d=et-st;for(var w=0;w<=8;w++)pos.setValueAtTime(st+d*w/8,[p[0],p[1]+Math.sin(w*Math.PI/2)*28]);}
+            if(t==="flash"){if(isSL){op.setValueAtTime(st,0);op.setValueAtTime(st+0.06,100);op.setValueAtTime(st+0.1,70);op.setValueAtTime(st+0.16,100);}else{op.setValueAtTime(st,0);op.setValueAtTime(st+0.04,100);op.setValueAtTime(st+0.09,18);op.setValueAtTime(st+0.14,100);op.setValueAtTime(st+0.19,55);op.setValueAtTime(st+0.24,100);}}
+            if(t==="rubber"){sc.setValueAtTime(st,[s[0]*1.55,s[1]*0.45]);sc.setValueAtTime(st+0.1,[s[0]*0.78,s[1]*1.35]);sc.setValueAtTime(st+0.19,[s[0]*1.1,s[1]*0.92]);sc.setValueAtTime(st+0.27,s);}
+            if(t==="spin"){rot.setValueAtTime(st,-180);rot.setValueAtTime(st+0.18,8);rot.setValueAtTime(st+0.28,0);sc.setValueAtTime(st,[s[0]*0.05,s[1]*0.05]);sc.setValueAtTime(st+0.18,s);}
+        }catch(e){}}
+        var fo=et-0.15;if(fo>st+0.35){op.setValueAtTime(fo,100);op.setValueAtTime(et,0);}
     }
-
     app.endUndoGroup();
-    alert("완료! " + lines.length + "개 레이어 생성\\n모드: ${isSub?'자막 ('+curSubPos+')':'전체화면'}");
+    alert("완료! "+lines.length+"개 레이어\\n모드: ${isSub?'자막('+aeSub+')':'전체화면'}");
 })();`;
+  document.getElementById('ae-dl').style.display='block';
+  aeStatus('✅ '+lines.length+'줄 생성 완료','ok');
+}
+function aeSv(){if(!aeBuf)return;const b=new Blob([aeBuf],{type:'text/javascript'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`AE_Kinetic_${aeMode}_${new Date().toISOString().slice(0,10)}.jsx`;a.click();}
 
-  document.getElementById('downloadBtn').style.display='block';
-  setStatus('✅ '+lines.length+'줄 생성 완료 — 저장 버튼을 누르세요','ok');
-}
+/* ── DV state ── */
+let dvBuf='',dvMode='full',dvSub='bot_C';
+function dvM(m){dvMode=m;document.getElementById('dv-mf').className='mb'+(m==='full'?' of':'');document.getElementById('dv-ms').className='mb'+(m==='sub'?' os':'');document.getElementById('dv-sx').className='subx'+(m==='sub'?' show':'');document.getElementById('dv-asf').style.display=m==='full'?'flex':'none';document.getElementById('dv-sn').style.display=m==='sub'?'block':'none';document.getElementById('dv-sc').style.display=m==='sub'?'block':'none';}
+function dvP(p,el){dvSub=p;document.querySelectorAll('#dv .pb').forEach(b=>b.classList.remove('on'));el.classList.add('on');}
+function dvSy(v){document.getElementById('dv-fsv').textContent=v;document.getElementById('dv-fsn').value=v;}
+function dvSyN(v){const c=Math.max(1,Math.min(999,parseInt(v)||100));document.getElementById('dv-fs').value=Math.min(c,300);document.getElementById('dv-fsv').textContent=c;}
+function dvStatus(m,c){const e=document.getElementById('dv-st');e.textContent=m;e.className='st'+(c?' '+c:'');}
 
-function setStatus(msg,cls) {
-  const el=document.getElementById('statusMsg');
-  el.textContent=msg;
-  el.className='status'+(cls?' '+cls:'');
+function dvBuild(){
+  const raw=document.getElementById('dv-tx').value.split('\n').filter(s=>s.trim()&&!s.trim().startsWith('['));
+  if(!raw.length){dvStatus('⚠ 텍스트를 입력하세요.','err');return;}
+  const fp=[...document.querySelectorAll('#dv-fp input:checked')].map(e=>e.value);
+  const fx=[...document.querySelectorAll('#dv-fx input:checked')].map(e=>e.value);
+  if(!fp.length){dvStatus('⚠ Fade 방향을 선택하세요.','err');return;}
+  const font=document.getElementById('dv-fn').value||'Arial';
+  const bold=document.getElementById('dv-bd').value==='true';
+  const fc=h2lua(document.getElementById('dv-fc').value);
+  const bg=h2lua(document.getElementById('dv-bg').value);
+  const ba=parseInt(document.getElementById('dv-ba').value)/100;
+  const fs=parseInt(document.getElementById('dv-fsn').value)||100;
+  const as=document.getElementById('dv-as').value;
+  const sync=document.getElementById('dv-sync').value;
+  const dur=parseFloat(document.getElementById('dv-dur').value)||3;
+  const fm=document.getElementById('dv-fm').value;
+  const sk=document.getElementById('dv-sk').value;
+  const sd=parseFloat(document.getElementById('dv-sd').value)||2;
+  const isSub=dvMode==='sub';
+  const pm={top_L:[0.1,0.88],top_C:[0.5,0.88],top_R:[0.9,0.88],mid_L:[0.1,0.5],mid_C:[0.5,0.5],mid_R:[0.9,0.5],bot_L:[0.1,0.12],bot_C:[0.5,0.12],bot_R:[0.9,0.12]};
+  const[spx,spy]=pm[dvSub]||pm['bot_C'];
+  const bgWithAlpha=bg.replace(/1\.0\}/,ba.toFixed(2)+'}');
+
+  dvBuf=`--[[ ================================================
+  DaVinci Resolve Lua — Kinetic Typo Pro v1.0
+  Mode : ${isSub?'Subtitle('+dvSub+')':'Kinetic Fullscreen'}
+  Date : ${new Date().toLocaleString('ko-KR')}  Lines: ${raw.length}
+
+  사용법:
+    Workspace > Scripts > (이 파일 저장 후 실행) 또는
+    Workspace > Console (Lua탭) 에 전체 붙여넣기
+================================================ --]]
+
+local resolve  = Resolve()
+local proj     = resolve:GetProjectManager():GetCurrentProject()
+local timeline = proj:GetCurrentTimeline()
+local pool     = proj:GetMediaPool()
+
+if not timeline then print("ERROR: 타임라인을 열어주세요."); return end
+
+-- ── 설정 ──────────────────────────────────────────────
+local IS_SUB    = ${isSub}
+local FONT      = "${font}"
+local BOLD      = ${bold}
+local FS        = ${fs}
+local AUTO_SC   = "${as}"
+local TC        = ${fc}
+local BGC       = ${bgWithAlpha}
+local SUB_X     = ${spx}
+local SUB_Y     = ${spy}
+local DEF_DUR   = ${dur}
+local FADE_MODE = "${fm}"
+local FADE_POOL = ${JSON.stringify(fp)}
+local FX_POOL   = ${JSON.stringify(fx.length?fx:['bounce'])}
+local SYNC      = "${sync}"
+local SUB_KEEP  = "${sk}"
+local SUB_DUR   = ${sd}
+
+-- ── 가사 ──────────────────────────────────────────────
+local LINES = ${JSON.stringify(raw)}
+
+-- ── 유틸 ──────────────────────────────────────────────
+math.randomseed(os.time())
+local function rPick(t) return t[math.random(#t)] end
+local function rPicks(t,n)
+    local p,r={table.unpack(t)},{}
+    for i=1,math.min(n,#p) do local x=math.random(#p);table.insert(r,p[x]);table.remove(p,x) end
+    return r
+end
+local function getFPS() return tonumber(timeline:GetSetting("timelineFrameRate")) or 24 end
+local function s2f(s) return math.floor(s*getFPS()+0.5) end
+
+-- ── 마커 읽기 ──────────────────────────────────────────
+local markerT={}
+if SYNC=="marker" then
+    local mk=timeline:GetMarkers()
+    if mk then
+        local fps=getFPS(); local ff={}
+        for f,_ in pairs(mk) do table.insert(ff,tonumber(f)) end
+        table.sort(ff)
+        for _,f in ipairs(ff) do table.insert(markerT,f/fps) end
+    end
+    if #markerT==0 then print("WARNING: 마커 없음 → 균등분할");SYNC="linear"
+    elseif #markerT<#LINES then print("WARNING: 마커("..#markerT..")<줄("..#LINES..")") end
+end
+
+local function getStEt(i)
+    local st,et
+    if SYNC=="marker" and markerT[i] then
+        st=markerT[i]
+        if IS_SUB and SUB_KEEP=="fixed_dur" then et=st+SUB_DUR
+        elseif markerT[i+1] then et=markerT[i+1]
+        else et=st+DEF_DUR end
+    else st=(i-1)*DEF_DUR; et=st+(IS_SUB and SUB_DUR or DEF_DUR*0.9) end
+    return st,et
+end
+
+-- ── Fusion 효과 적용 ───────────────────────────────────
+local function applyFusion(clip, text, st, et, fadeType, motionFX)
+    local comp=clip:GetFusionCompByIndex(1)
+    if not comp then comp=clip:AddFusionComp() end
+    if not comp then print("SKIP: Fusion comp 없음 — "..text); return end
+
+    comp:StartUndo("KineticTypo")
+    local fps   = getFPS()
+    local dur   = et - st
+    local totF  = math.floor(dur*fps)
+    local mOut  = comp:FindToolByID("MediaOut")
+
+    -- Text+ 노드
+    local txt = comp:AddTool("TextPlus",-1,-1)
+    txt.StyledText = text
+    txt.Font       = FONT
+    txt.Style      = BOLD and "Bold" or "Regular"
+    txt.Size       = FS/1000.0
+    txt.Red1   = TC[1]; txt.Green1=TC[2]; txt.Blue1=TC[3]
+
+    -- 위치
+    if IS_SUB then
+        txt.Center = {SUB_X, SUB_Y}
+    else
+        txt.Center = {0.5, 0.5}
+        if AUTO_SC=="fit" then txt.Size=math.min(FS/1000.0,0.15) end
+    end
+
+    local baseX = IS_SUB and SUB_X or 0.5
+    local baseY = IS_SUB and SUB_Y or 0.5
+    local baseS = txt.Size.Value or FS/1000.0
+    local fadeF = math.floor(fps*0.2)
+    local movF  = math.floor(fps*0.22)
+
+    -- Fade In 투명도
+    txt.Alpha[0]       = 0
+    txt.Alpha[fadeF]   = 1
+
+    -- Fade Out (마지막 직전만)
+    local foF = totF - math.floor(fps*0.15)
+    if foF > fadeF+3 then
+        txt.Alpha[foF]   = 1
+        txt.Alpha[totF]  = 0
+    end
+
+    -- Fade 방향
+    if fadeType=="fade_h" then
+        txt["Center.X"][0]=baseX-0.1; txt["Center.X"][movF]=baseX
+    elseif fadeType=="fade_v" then
+        txt["Center.Y"][0]=baseY-(IS_SUB and -0.07 or 0.07); txt["Center.Y"][movF]=baseY
+    elseif fadeType=="fade_diag" then
+        txt["Center.X"][0]=baseX-0.08; txt["Center.X"][movF]=baseX
+        txt["Center.Y"][0]=baseY+0.05; txt["Center.Y"][movF]=baseY
+    elseif fadeType=="fade_zoom_in" then
+        txt.Size[0]=baseS*0.4; txt.Size[movF]=baseS
+    elseif fadeType=="fade_zoom_out" then
+        txt.Size[0]=baseS*1.7; txt.Size[movF]=baseS
+    end
+    -- fade_none: 그대로
+
+    -- 모션 효과
+    local bF=math.floor(fps*0.12); local bF2=math.floor(fps*0.24)
+    for _,fx in ipairs(motionFX) do
+        if fx=="bounce" then
+            txt["Center.Y"][0]=baseY+(IS_SUB and 0.08 or 0.15)
+            txt["Center.Y"][bF]=baseY-0.02
+            txt["Center.Y"][bF2]=baseY
+        elseif fx=="slide_l" then
+            txt["Center.X"][0]=baseX-0.35; txt["Center.X"][bF]=baseX+0.02; txt["Center.X"][bF2]=baseX
+        elseif fx=="slide_r" then
+            txt["Center.X"][0]=baseX+0.35; txt["Center.X"][bF]=baseX-0.02; txt["Center.X"][bF2]=baseX
+        elseif fx=="drop" then
+            txt["Center.Y"][0]=baseY-(IS_SUB and 0.15 or 0.35)
+            txt["Center.Y"][bF]=baseY+0.02; txt["Center.Y"][bF2]=baseY
+        elseif fx=="rise" then
+            txt["Center.Y"][0]=baseY+(IS_SUB and 0.15 or 0.35)
+            txt["Center.Y"][bF]=baseY-0.02; txt["Center.Y"][bF2]=baseY
+        elseif fx=="scale_pop" then
+            txt.Size[0]=baseS*0.05; txt.Size[bF]=baseS*1.22; txt.Size[bF2]=baseS
+        elseif fx=="spin_in" then
+            txt.Angle[0]=-180; txt.Angle[bF]=8; txt.Angle[bF2]=0
+            txt.Size[0]=baseS*0.05; txt.Size[bF]=baseS
+        elseif fx=="shake" then
+            local sf=math.floor(fps*0.04)
+            txt["Center.X"][0]=baseX+0.015; txt["Center.X"][sf]=baseX-0.015
+            txt["Center.X"][sf*2]=baseX+0.01; txt["Center.X"][sf*3]=baseX-0.008
+            txt["Center.X"][sf*4]=baseX
+        end
+    end
+
+    -- 자막 배경
+    if IS_SUB then
+        local bg2=comp:AddTool("Background",-1,-1)
+        bg2.TopLeftRed=BGC[1]; bg2.TopLeftGreen=BGC[2]
+        bg2.TopLeftBlue=BGC[3]; bg2.TopLeftAlpha=BGC[4] or ${ba.toFixed(2)}
+        local mg=comp:AddTool("Merge",-1,-1)
+        mg:ConnectInput("Background",bg2); mg:ConnectInput("Foreground",txt)
+        if mOut then mOut:ConnectInput("Input",mg) end
+    else
+        if mOut then mOut:ConnectInput("Input",txt) end
+    end
+
+    comp:EndUndo(true)
+end
+
+-- ── 메인: V2 트랙 클립에 적용 ─────────────────────────
+print("=== Kinetic Typo Pro — DaVinci Lua ===")
+print("줄: "..#LINES.." / 모드: "..(IS_SUB and "자막" or "키네틱"))
+
+local clips=timeline:GetItemListInTrack("video",2) or {}
+if #clips==0 then
+    print([[
+⚠ V2 트랙에 클립이 없습니다.
+
+【준비 방법】
+1. Edit 페이지 > Effects Library > Titles
+2. "Fusion Title" 을 V2 트랙에 마커 수만큼 드래그
+3. 이 스크립트를 다시 실행
+
+또는 Fusion 페이지에서 직접 노드를 만드세요.
+]])
+    return
+end
+
+local ok=0
+for i,line in ipairs(LINES) do
+    local clip=clips[i]
+    if not clip then
+        print("SKIP: 클립 수("..#clips..")가 줄 수("..#LINES..")보다 적음. "..i.."번째 건너뜀")
+        break
+    end
+    local st,et=getStEt(i)
+    local fd=(FADE_MODE=="random") and rPick(FADE_POOL) or FADE_POOL[1]
+    local np=math.random(1,math.min(3,#FX_POOL))
+    local picks=rPicks(FX_POOL,np)
+    applyFusion(clip,line,st,et,fd,picks)
+    print(string.format("✅ %d/%d [%s] fade=%s fx={%s}",i,#LINES,line,fd,table.concat(picks,",")))
+    ok=ok+1
+end
+print("=== 완료! "..ok.."개 클립 처리 ===")
+`;
+
+  document.getElementById('dv-dl').style.display='block';
+  dvStatus('✅ '+raw.length+'줄 생성 완료 — 저장 버튼을 누르세요','ok');
 }
-function saveFile() {
-  if (!codeBuffer) return;
-  const blob=new Blob([codeBuffer],{type:'text/javascript'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download=`AE_Kinetic_v6_1_${curMode}_${new Date().toISOString().slice(0,10)}.jsx`;
-  a.click();
-}
+function dvSv(){if(!dvBuf)return;const b=new Blob([dvBuf],{type:'text/plain'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`DV_KineticTypo_${dvMode}_${new Date().toISOString().slice(0,10)}.lua`;a.click();}
 </script>
 </body>
 </html>
