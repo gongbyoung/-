@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>AE Kinetic Typo — AEV000</title>
+<title>AE Kinetic Typo — AEV001</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+KR:wght@300;400;700;900&display=swap');
 :root{--bg:#080810;--sf:#0f0f1a;--bd:#1e1e30;--ac:#00e5ff;--pk:#ff2d78;--gd:#ffd000;--gn:#00ff88;--tx:#c8c8e0;--dm:#55556a;--r:8px;}
@@ -68,14 +68,20 @@ input[type=color]{width:100%;height:30px;border-radius:6px;border:1px solid var(
   <div class="logo">AE <em>KINETIC</em> TYPO</div>
   <div style="display:flex;align-items:center;gap:10px">
     <span style="font-size:10px;color:var(--dm)">After Effects JSX Generator</span>
-    <span class="badge">AEV000</span>
+    <span class="badge">AEV001</span>
   </div>
 </div>
 <div class="main">
 <div class="left">
   <div class="slabel">가사 / 자막 입력</div>
-  <textarea id="tx" placeholder="한 줄 = 마커 1개&#10;&#10;Hello World&#10;안녕하세요&#10;Kinetic Typography"></textarea>
-  <div class="ib">💡 <b>마커 모드 사용법</b><br>1. 음악 레이어에 마커 추가<br>2. 음악 레이어 선택 후 스크립트 실행<br>3. 줄 수 = 마커 수 일치 필요<br><span style="color:var(--gd)">[ ]로 시작하는 줄은 무시</span></div>
+  <textarea id="tx" placeholder="한 줄 = 마커 1개 = 자막/가사 1개&#10;&#10;💡 권장 글자수 (균일한 크기를 위해)&#10;키네틱: 10~13자 권장&#10;  예) 하다 못해 죽어 달려가 올라 (12자)&#10;자막: 16~22자 권장&#10;  예) 아주 나는 바랄 것 더 없노라 (17자)&#10;&#10;[ ]로 시작하는 줄은 무시됩니다"></textarea>
+  <div class="ib">💡 <b>권장 글자수</b><br>
+    키네틱: <span style="color:var(--ac)">10~13자</span> (균일한 크기)<br>
+    자막: <span style="color:var(--gd)">16~22자</span> (1~2줄)<br>
+    <br>
+    마커 모드: 음악 레이어 선택 후 실행<br>
+    <span style="color:var(--gd)">[ ]로 시작하는 줄은 무시</span>
+  </div>
 </div>
 <div class="right"><div class="g2">
 
@@ -212,11 +218,18 @@ function doBuild(){
   const isSub=mode==='sub';
   const pm={top_L:[0.1,sh/2],top_C:[0.5,sh/2],top_R:[0.9,sh/2],mid_L:[0.1,0.5],mid_C:[0.5,0.5],mid_R:[0.9,0.5],bot_L:[0.1,1-sh/2],bot_C:[0.5,1-sh/2],bot_R:[0.9,1-sh/2]};
   const[spx,spy]=pm[subPos]||pm['bot_C'];
-  const lines=raw.map(l=>l.trim().split(/\s+/).map(w=>{let c='';for(let i=0;i<w.length;i+=8)c+=w.slice(i,i+8)+(i+8<w.length?'\r':'');return c;}).join('\r'));
+  // ── 줄 처리 ──────────────────────────────────────────
+  // 자막: 입력한 줄 그대로 (띄어쓰기 유지, 줄바꿈 없음)
+  // 키네틱: 입력한 줄 그대로 (띄어쓰기에 줄바꿈 하지 않음)
+  const lines = raw.map(l => l.trim());
+
+  // 키네틱 모드: 모든 줄에 동일한 스케일 적용을 위해
+  // 가장 긴 줄 기준으로 고정 스케일 계산 (AE 스크립트에서 처리)
+  const maxLen = Math.max(...lines.map(l => l.length));
   const strokeCode=sw>0?`        doc.strokeColor=${scol};\n        doc.strokeWidth=${sw};\n        doc.strokeOverFill=true;`:'';
 
   buf=`/* ================================================
-   After Effects JSX — AEV000
+   After Effects JSX — AEV001
    Mode : ${isSub?'Subtitle ('+subPos+')':'Fullscreen'}
    Date : ${new Date().toLocaleString('ko-KR')}
    Lines: ${lines.length}
@@ -232,6 +245,32 @@ function doBuild(){
     var fpPool=${JSON.stringify(fpArr)};
     var fm="${fm}";
     var lines=${JSON.stringify(lines)};
+
+    /* ── 키네틱 모드: 균일 스케일 사전 계산 ──────────────
+       가장 긴 줄로 임시 레이어를 만들어 기준 스케일을 구한 뒤
+       모든 레이어에 동일하게 적용합니다.
+       자막 모드에서는 사용하지 않습니다. */
+    var uniformScale = null;
+    if (!isSub && "${autoS}" === "fit") {
+        // 가장 긴 줄 인덱스 찾기
+        var longestIdx = 0;
+        for (var li = 1; li < lines.length; li++) {
+            if (lines[li].length > lines[longestIdx].length) longestIdx = li;
+        }
+        // 임시 레이어로 기준 측정
+        var tempL = comp.layers.addText(lines[longestIdx]);
+        var tempSP = tempL.property("ADBE Text Properties").property("ADBE Text Document");
+        var tempDoc = tempSP.value;
+        tempDoc.fontSize = ${fs};
+        tempDoc.font = "${font}";
+        tempDoc.justification = ParagraphJustification.CENTER_JUSTIFY;
+        tempSP.setValue(tempDoc);
+        var tempR = tempL.sourceRectAtTime(0, false);
+        var sc = Math.min((cW * 0.92 / tempR.width) * 100, (cH * 0.88 / tempR.height) * 100);
+        if (sc > 500) sc = 500;
+        uniformScale = sc;
+        tempL.remove();
+    }
 
     if(useM){
         if(!mL){alert("마커 모드: 음악 레이어를 선택하세요.\\n균등분할로 진행합니다.");useM=false;}
@@ -269,8 +308,15 @@ ${strokeCode}
         if(isSub){
             fsc=100;l.scale.setValue([fsc,fsc]);l.position.setValue([cW*spx,cH*spy]);
         }else{
-            fsc=("${autoS}"==="fit")?Math.min((cW*0.92/r.width)*100,(cH*0.88/r.height)*100):100;
-            if(fsc>500)fsc=500;
+            /* 키네틱: uniformScale(가장 긴 줄 기준) 또는 개별 fit */
+            if (uniformScale !== null) {
+                fsc = uniformScale;
+            } else {
+                fsc = ("${autoS}" === "fit")
+                    ? Math.min((cW*0.92/r.width)*100, (cH*0.88/r.height)*100)
+                    : 100;
+                if(fsc>500) fsc=500;
+            }
             l.scale.setValue([fsc,fsc]);l.position.setValue([cW/2,cH/2]);
         }
         var tf=(fm==="random")?fpPool[Math.floor(Math.random()*fpPool.length)]:fpPool[0];
@@ -320,7 +366,7 @@ function doSave(){
   const b=new Blob([buf],{type:'text/javascript'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(b);
-  a.download='AEV000_'+mode+'_'+new Date().toISOString().slice(0,10)+'.jsx';
+  a.download='AEV001_'+mode+'_'+new Date().toISOString().slice(0,10)+'.jsx';
   a.click();
 }
 </script>
