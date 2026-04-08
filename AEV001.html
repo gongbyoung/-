@@ -73,41 +73,21 @@ function generateJSX() {
             myLayer.outPoint = currentTime + 3.0; 
             currentTime += 1.0; 
 
-            // [수정된 부분: 글자별 3D 활성화 오류 완벽 해결!]
+            // 글자별 3D 활성화
             myLayer.threeDPerChar = true;
 
             var textProp = myLayer.property("ADBE Text Properties");
             var animators = textProp.property("ADBE Text Animators");
 
+            // [인(In) 애니메이션]
             var animatorIn = animators.addProperty("ADBE Text Animator");
+            animatorIn.name = "Animate In";
             animatorIn.property("ADBE Text Animator Properties").addProperty("ADBE Text Position 3D").setValue([0, 150, 0]);
             animatorIn.property("ADBE Text Animator Properties").addProperty("ADBE Text Rotation Y").setValue(180);
             animatorIn.property("ADBE Text Animator Properties").addProperty("ADBE Text Opacity").setValue(0);
             
             var selectorIn = animatorIn.property("ADBE Text Selectors").addProperty("ADBE Text Selector");
-            selectorIn.property("ADBE Text Index Start").setValueAtTime(myLayer.inPoint, 0);
-            selectorIn.property("ADBE Text Index Start").setValueAtTime(myLayer.inPoint + 1.0, 100);
-
-            var animatorOut = animators.addProperty("ADBE Text Animator");
-            animatorOut.property("ADBE Text Animator Properties").addProperty("ADBE Text Rotation Y").setValue(-180);
-            animatorOut.property("ADBE Text Animator Properties").addProperty("ADBE Text Opacity").setValue(0);
             
-            var selectorOut = animatorOut.property("ADBE Text Selectors").addProperty("ADBE Text Selector");
-            selectorOut.property("ADBE Text Index Start").setValueAtTime(myLayer.outPoint - 1.0, 0);
-            selectorOut.property("ADBE Text Index Start").setValueAtTime(myLayer.outPoint, 100);
-        }
-    `;
-    
-    jsxStr += `} else { alert("애프터 이펙트에서 텍스트를 넣을 컴포지션을 먼저 선택해주세요."); }\n`;
-    jsxStr += `app.endUndoGroup();\n`;
-
-    var blob = new Blob([jsxStr], { type: "text/plain;charset=utf-8" });
-    var link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "Lyrical_3D_Typo_Fixed.jsx";
-    link.click();
-}
-</script>
-
-</body>
-</html>
+            // [에러 해결!] 히든 속성 에러 방지를 위해 고유 인덱스(1 = Start)를 직접 호출합니다.
+            var startPropIn = selectorIn.property(1); 
+            startPropIn.setValueAtTime(my
