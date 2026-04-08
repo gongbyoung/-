@@ -6,7 +6,7 @@
     <title>AE KINETIC TYPO - Lyrical 3D</title>
     <style>
         body {
-            background-color: #121216; /* 캡처본의 어두운 테마 */
+            background-color: #121216;
             color: #e0e0e0;
             font-family: 'Malgun Gothic', sans-serif;
             margin: 0; padding: 40px;
@@ -57,32 +57,26 @@ function generateJSX() {
         return;
     }
 
-    // 줄바꿈으로 가사 분리 (빈 줄 제거)
     var lines = lyricsText.split('\n').filter(line => line.trim() !== '');
     
-    // JSX 문자열 조립 시작
     var jsxStr = `app.beginUndoGroup("Lyrical 3D Typo 생성");\n`;
     jsxStr += `var myComp = app.project.activeItem;\n`;
     jsxStr += `if (myComp != null && (myComp instanceof CompItem)) {\n`;
-    
-    // JS 배열을 JSX 안의 배열로 변환
     jsxStr += `  var lyrics = ${JSON.stringify(lines)};\n`;
     
-    // 텍스트 생성 및 효과 부여 루프
     jsxStr += `
         var currentTime = 0;
         for (var i = 0; i < lyrics.length; i++) {
             var myLayer = myComp.layers.addText(lyrics[i]);
             
-            // 레이어 길이 및 시작 시간 세팅 (기본 3초짜리 레이어를 계단식으로 배치)
             myLayer.startTime = currentTime;
             myLayer.outPoint = currentTime + 3.0; 
-            currentTime += 1.0; // 다음 레이어는 1초 뒤에 생성
+            currentTime += 1.0; 
 
-            // [효과: 서정적 3D 스핀]
+            // [수정된 부분: 글자별 3D 활성화 오류 완벽 해결!]
+            myLayer.threeDPerChar = true;
+
             var textProp = myLayer.property("ADBE Text Properties");
-            textProp.property("ADBE Text More Options").property("ADBE Text Per-Character 3D").setValue(true);
-
             var animators = textProp.property("ADBE Text Animators");
 
             var animatorIn = animators.addProperty("ADBE Text Animator");
@@ -107,11 +101,10 @@ function generateJSX() {
     jsxStr += `} else { alert("애프터 이펙트에서 텍스트를 넣을 컴포지션을 먼저 선택해주세요."); }\n`;
     jsxStr += `app.endUndoGroup();\n`;
 
-    // 파일 다운로드 로직
     var blob = new Blob([jsxStr], { type: "text/plain;charset=utf-8" });
     var link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = "Lyrical_3D_Typo.jsx";
+    link.download = "Lyrical_3D_Typo_Fixed.jsx";
     link.click();
 }
 </script>
